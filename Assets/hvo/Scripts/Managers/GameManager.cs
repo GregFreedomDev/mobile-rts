@@ -31,6 +31,10 @@ public class GameManager : SingletonManager<GameManager>
     [SerializeField] private float m_PanSpeed = 100;
     [SerializeField] private float m_MobilePanSpeed = 10;
 
+    [SerializeField] private float m_ZoomSpeed = 10.0f;
+    [SerializeField] private float m_MinZoom = 10.0f;
+    [SerializeField] private float m_MaxZoom = 10.0f;
+
     [Header("VFX")]
     [SerializeField] private ParticleSystem m_ConstructionEffectPrefab;
 
@@ -75,7 +79,7 @@ public class GameManager : SingletonManager<GameManager>
     void Start()
     {
         Time.timeScale = 1;
-        m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
+        m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed, m_ZoomSpeed, m_MinZoom, m_MaxZoom);
         ClearActionBarUI();
         AddResources(500, 500);
 
@@ -594,7 +598,8 @@ public class GameManager : SingletonManager<GameManager>
         {
             m_ActionBar.RegisterAction(
                 action.Icon,
-                () => {
+                () =>
+                {
                     AudioManager.Get().PlayBtnClick();
                     action.Execute(this);
                 }
