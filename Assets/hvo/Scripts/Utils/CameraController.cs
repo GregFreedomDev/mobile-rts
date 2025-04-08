@@ -1,12 +1,11 @@
-
-
-
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraController
 {
     private float m_PanSpeed;
     private float m_MobilePanSpeed;
+    private bool m_IsDragging;
 
     public bool LockCamera { get; set; }
 
@@ -16,9 +15,17 @@ public class CameraController
         m_MobilePanSpeed = mobilePanSpeed;
     }
 
+    public void SetDragging(bool isDragging)
+    {
+        m_IsDragging = isDragging;
+    }
+
     public void Update()
     {
-        if (LockCamera) return;
+        if (LockCamera || m_IsDragging) return;
+
+        // No mover la cámara si el mouse está sobre un elemento de UI
+        if (HvoUtils.IsPointerOverUIElement()) return;
 
         if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
         {

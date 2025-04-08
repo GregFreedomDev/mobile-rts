@@ -15,7 +15,7 @@ public class ConfirmationBar: MonoBehaviour
 
     void OnDisable()
     {
-        UnsubscribeAll();
+        UnsubscribeAll();       
     }
 
     public void Show(int gold, int wood)

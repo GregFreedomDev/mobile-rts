@@ -1,5 +1,3 @@
-
-
 using UnityEngine;
 
 public class EnemyUnit : HumanoidUnit
@@ -7,10 +5,20 @@ public class EnemyUnit : HumanoidUnit
     private float m_AttackCommitmentTime = 1f;
     private float m_CurrentAttackCommitmentTime = 0;
     public override bool IsPlayer => false;
-    public Unit KingUnit => m_GameManager.KingUnit;
+
+    protected override void Start()
+    {
+        base.Start();
+        m_SpriteRenderer.flipX = false;
+    }
 
     protected override void UpdateBehaviour()
     {
+        if(!m_GameManager.BattleController.BattleStarted)
+        {
+            return;
+        }
+
         switch (CurrentState)
         {
             case UnitState.Idle:
@@ -29,25 +37,18 @@ public class EnemyUnit : HumanoidUnit
                 }
                 else
                 {
-                    if (TryFindClosestFoe(out var foe))
+                    // Buscar el objetivo más cercano en todo el tablero
+                    Unit closestFoe = m_GameManager.FindClosestUnit(transform.position, float.MaxValue, !IsPlayer);
+                    if (closestFoe != null)
                     {
-                        SetTarget(foe);
-                        MoveTo(foe.transform.position);
+                        SetTarget(closestFoe);
+                        MoveTo(closestFoe.transform.position);
                     }
-                    else if (KingUnit != null && KingUnit.CurrentState != UnitState.Dead)
-                    {
-                        var distance = Vector3.Distance(transform.position, KingUnit.transform.position);
-
-                        if (distance < m_ObjectDetectionRadius)
-                        {
-                            SetTarget(KingUnit);
-                        }
-
-                        MoveTo(KingUnit.transform.position);
-                    }
+    
                 }
 
                 break;
+            
             case UnitState.Attacking:
                 if (HasTarget)
                 {
@@ -70,6 +71,26 @@ public class EnemyUnit : HumanoidUnit
                     SetState(UnitState.Idle);
                 }
                 break;
+        }
+    }
+
+    protected override void UpdateMovementAnimation()
+    {
+        base.UpdateMovementAnimation();
+    }
+
+    protected override void PerformAttackAnimation()
+    {
+        if (Target == null) return;
+
+        Vector3 direction = (Target.transform.position - transform.position).normalized;
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            m_Animator.SetTrigger("AttackHorizontal");
+        }
+        else
+        {
+            m_Animator.SetTrigger(direction.y > 0 ? "AttackUp" : "AttackDown");
         }
     }
 }

@@ -1,8 +1,10 @@
-
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using HvO.UI;
+using UnityEngine.UI;
+using System.Collections;
 
 public enum ClickType
 {
@@ -26,6 +28,9 @@ public class GameManager : SingletonManager<GameManager>
     [SerializeField] private TextPopupController m_TextPopupController;
     [SerializeField] private ResourceDataUI m_ResourceDataUI;
     [SerializeField] private GameOverLayout m_GameOverLayout;
+    [SerializeField] private GameObject m_UnitButtonPrefab;
+    [SerializeField] private Canvas m_MainCanvas;
+    [SerializeField] private GameObject m_UnitListPanelPrefab;
 
     [Header("Camera Settings")]
     [SerializeField] private float m_PanSpeed = 100;
@@ -47,6 +52,11 @@ public class GameManager : SingletonManager<GameManager>
     [SerializeField] private AudioSettings m_WinAudioSettings;
     [SerializeField] private AudioSettings m_LoseAudioSettings;
 
+    [SerializeField] private BattleController m_BattleController;
+
+    public BattleController BattleController => m_BattleController;
+
+
     public Unit ActiveUnit;
 
     private GameState m_GameState = GameState.Playing;
@@ -59,6 +69,16 @@ public class GameManager : SingletonManager<GameManager>
     private PlacementProcess m_PlacementProcess;
     private int m_Gold = 0;
     private int m_Wood = 0;
+
+    public CameraController CameraController => m_CameraController;
+
+    // Lista de nombres de prefabs de unidades
+    private readonly string[] unitPrefabNames = new string[] {
+        "Warrior",
+        "Archer",
+        "Demolisher",
+        "Goblin"
+    };
 
     public int Gold => m_Gold;
     public int Wood => m_Wood;
@@ -79,22 +99,59 @@ public class GameManager : SingletonManager<GameManager>
         ClearActionBarUI();
         AddResources(500, 500);
 
-        m_EnemySpawner.Startup();
         AudioManager.Get().PlayMusic(m_BgMusicAudioSettings);
 
         m_GameOverLayout.OnRestartClicked += RestartGame;
         m_GameOverLayout.OnQuitClicked += GoToMenu;
+
+        // Inicializar el sistema de UI de unidades
+        InitializeUnitUI();
+    }
+
+    private void InitializeUnitUI()
+    {
+        // Cargar el prefab del botón
+        m_UnitButtonPrefab = Resources.Load<GameObject>("Prefabs/UnitButton");
+        if (m_UnitButtonPrefab == null)
+        {
+            Debug.LogError("No se pudo cargar el prefab del botón de unidad");
+            return;
+        }
+
+        // Verificar que tenemos el prefab del panel
+        if (m_UnitListPanelPrefab == null)
+        {
+            Debug.LogError("No se ha asignado el prefab del panel en el Inspector");
+            return;
+        }
+
+        // Instanciar el panel
+        GameObject panelInstance = Instantiate(m_UnitListPanelPrefab, m_MainCanvas.transform);
+        
+        // Añadir el componente UnitListUI
+        UnitListUI unitListUI = panelInstance.AddComponent<UnitListUI>();
+        
+        // Inicializar la UI con el prefab del botón
+        unitListUI.Initialize(m_UnitButtonPrefab);
+
+        // Cargar y agregar las unidades disponibles
+        foreach (string prefabName in unitPrefabNames)
+        {
+            GameObject unitPrefab = Resources.Load<GameObject>($"Prefabs/Units/{prefabName}");
+            if (unitPrefab != null)
+            {
+                unitListUI.AddUnit(unitPrefab);
+            }
+            else
+            {
+                Debug.LogWarning($"No se pudo cargar el prefab de la unidad: {prefabName}");
+            }
+        }
     }
 
     void Update()
     {
         if (m_GameState == GameState.Paused) return;
-
-        if (m_EnemySpawner.SpawnState == SpawnState.Finished && m_Enemies.Count == 0)
-        {
-            HandleGameOver(true);
-            return;
-        }
 
         m_CameraController.Update();
 
@@ -658,7 +715,7 @@ public class GameManager : SingletonManager<GameManager>
         m_CameraController.LockCamera = false;
     }
 
-    bool TryDeductResources(int goldCost, int woodCost)
+    public bool TryDeductResources(int goldCost, int woodCost)
     {
         if (m_Gold >= goldCost && m_Wood >= woodCost)
         {

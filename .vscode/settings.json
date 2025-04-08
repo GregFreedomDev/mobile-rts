@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "hvo.sln"
+    "dotnet.defaultSolution": "mobile-rts.sln",
+    "dotnet.preferCSharpExtension": true
 }

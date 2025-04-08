@@ -1,5 +1,3 @@
-
-
 using System;
 using System.Collections;
 using Unity.VisualScripting;
@@ -11,6 +9,8 @@ public class HumanoidUnit : Unit
     [SerializeField] private float m_FootstepFrequency = 0.3f;
     protected Vector2 m_Velocity;
     protected Vector3 m_LastPosition;
+    protected Vector3 m_InitialPosition; // Guardar la posición inicial
+    protected bool m_IsEnemy;
 
     protected float m_SmoothFactor = 50;
     protected float m_SmoothedSpeed;
@@ -23,6 +23,8 @@ public class HumanoidUnit : Unit
     {
         base.Start();
         m_LastPosition = transform.position;
+        m_InitialPosition = transform.position; // Guardar la posición inicial
+
     }
 
     protected void Update()
@@ -44,7 +46,7 @@ public class HumanoidUnit : Unit
         ) / Time.unscaledDeltaTime;
 
         m_LastPosition = transform.position;
-        m_SmoothedSpeed = Mathf.Lerp(m_SmoothedSpeed, CurrentSpeed, Time.unscaledDeltaTime * m_SmoothFactor);
+        m_SmoothedSpeed = Mathf.Lerp(m_SmoothedSpeed, CurrentSpeed, Time.unscaledDeltaTime * m_SmoothFactor);    
 
         if (CurrentState != UnitState.Attacking)
         {
@@ -70,11 +72,12 @@ public class HumanoidUnit : Unit
 
     protected override void PerformAttackAnimation()
     {
+        if (Target == null) return;
+
         Vector3 direction = (Target.transform.position - transform.position).normalized;
 
         if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
         {
-            m_SpriteRenderer.flipX = direction.x < 0;
             m_Animator.SetTrigger("AttackHorizontal");
         }
         else

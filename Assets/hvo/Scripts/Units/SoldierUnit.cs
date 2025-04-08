@@ -1,12 +1,15 @@
-
-
-
 using UnityEngine;
 
 public class SoldierUnit : HumanoidUnit
 {
     private bool m_IsRetreating = false;
 
+    protected override void Start()
+    {
+        base.Start();
+        m_SpriteRenderer.flipX = false;
+    }
+    
     public override void SetStance(UnitStanceActionSO stanceActionSO)
     {
         base.SetStance(stanceActionSO);
@@ -64,6 +67,11 @@ public class SoldierUnit : HumanoidUnit
 
     protected override void UpdateBehaviour()
     {
+        if(!m_GameManager.BattleController.BattleStarted)
+        {
+            return;
+        }
+
         if (CurrentState == UnitState.Idle || CurrentState == UnitState.Moving)
         {
             if (HasTarget)
@@ -82,10 +90,16 @@ public class SoldierUnit : HumanoidUnit
             {
                 if (CurrentStance == UnitStance.Offensive)
                 {
-                    if (!m_IsRetreating && TryFindClosestFoe(out var foe))
+                    if (!m_IsRetreating)
                     {
-                        SetTarget(foe);
-                        SetTask(UnitTask.Attack);
+                        // Buscar el objetivo más cercano en todo el tablero
+                        Unit closestFoe = m_GameManager.FindClosestUnit(transform.position, float.MaxValue, !IsPlayer);
+                        if (closestFoe != null)
+                        {
+                            SetTarget(closestFoe);
+                            SetTask(UnitTask.Attack);
+                            MoveTo(closestFoe.transform.position);
+                        }
                     }
                 }
             }
@@ -116,6 +130,27 @@ public class SoldierUnit : HumanoidUnit
             {
                 SetState(UnitState.Idle);
             }
+        }
+    }
+
+    protected override void UpdateMovementAnimation()
+    {
+        base.UpdateMovementAnimation();
+    }
+
+    protected override void PerformAttackAnimation()
+    {
+        if (Target == null) return;
+
+        Vector3 direction = (Target.transform.position - transform.position).normalized;
+
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            m_Animator.SetTrigger("AttackHorizontal");
+        }
+        else
+        {
+            m_Animator.SetTrigger(direction.y > 0 ? "AttackUp" : "AttackDown");
         }
     }
 }

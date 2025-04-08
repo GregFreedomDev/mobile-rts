@@ -1,5 +1,3 @@
-
-
 using System.Collections;
 using UnityEngine;
 
@@ -151,7 +149,7 @@ public abstract class Unit : MonoBehaviour
     public void MoveTo(Vector3 destination, DestinationSource source = DestinationSource.CodeTriggered)
     {
         var direction = (destination - transform.position).normalized;
-        m_SpriteRenderer.flipX = direction.x < 0;
+       // m_SpriteRenderer.flipX = direction.x < 0;
 
         m_AIPawn.SetDestination(destination);
         OnSetDestination(source);
@@ -359,8 +357,18 @@ public abstract class Unit : MonoBehaviour
     {
         var targetCollider = target.Collider;
         var targetClosestPoint = targetCollider.ClosestPoint(transform.position);
-
-        return Vector3.Distance(targetClosestPoint, transform.position) <= m_AttackRange;
+        
+        // Añadir un pequeño margen para evitar el solapamiento
+        float effectiveRange = m_AttackRange * 0.8f;
+        
+        // Si hay otras unidades cercanas, aumentar la distancia mínima
+        var nearbyUnits = Physics2D.OverlapCircleAll(transform.position, 1.5f);
+        if (nearbyUnits.Length > 2) // Si hay más de 2 unidades (incluyendo esta)
+        {
+            effectiveRange = m_AttackRange;
+        }
+        
+        return Vector3.Distance(targetClosestPoint, transform.position) <= effectiveRange;
     }
 
     protected Collider2D[] RunProximityObjectDetection()
@@ -370,10 +378,9 @@ public abstract class Unit : MonoBehaviour
 
     void TurnToPosition(Vector3 newPosition)
     {
-        if (HasTarget && !IsPlayer) return;
-
-        var direction = (newPosition - transform.position).normalized;
-        m_SpriteRenderer.flipX = direction.x < 0;
+        // No permitir que este método afecte la orientación de las unidades
+        // La orientación se maneja en las clases específicas (EnemyUnit, SoldierUnit, etc.)
+        return;
     }
 
     void Highlight()
