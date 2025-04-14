@@ -1,7 +1,4 @@
-
-
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -20,6 +17,8 @@ public class AIPawn : MonoBehaviour
     private TilemapManager m_TilemapManager;
     private int m_CurrentNodeIndex;
     private GameManager m_GameManager;
+    private Unit m_Unit;
+    private Vector3 m_ExternalPushVelocity;
 
     public UnityAction<Vector3> OnNewPositionSelected = delegate { };
     public UnityAction OnDestinationReached = delegate { };
@@ -28,6 +27,7 @@ public class AIPawn : MonoBehaviour
     {
         m_GameManager = GameManager.Get();
         m_TilemapManager = TilemapManager.Get();
+        m_Unit = GetComponent<Unit>();
     }
 
     void Update()
@@ -38,19 +38,76 @@ public class AIPawn : MonoBehaviour
             return;
         }
 
-
         Vector3 separationVector = m_ApplySeparation ? CalculateSeparation() : Vector3.zero;
         Vector3 targetPosition = m_CurrentPath[m_CurrentNodeIndex];
         Vector3 direction = (targetPosition - transform.position).normalized;
-        Vector3 combinedDirection = direction + separationVector;
+        float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
 
+        // 🔁 Peso dinámico: reduce separación si está cerca del objetivo
+        float separationWeight = Mathf.Clamp01(distanceToTarget / 1.5f);
+        Vector3 combinedDirection = direction + separationVector * separationWeight;
+
+        // 🚨 EMPUJE si está atrapado con muchas unidades encima
+        var overlaps = Physics2D.OverlapCircleAll(transform.position, 0.3f);
+        if (overlaps.Length > 3)
+        {
+            Vector3 pushVector = Vector3.zero;
+
+            foreach (var col in overlaps)
+            {
+                if (col.gameObject == gameObject) continue;
+                Vector3 away = transform.position - col.transform.position;
+                if (away.sqrMagnitude > 0.001f)
+                {
+                    pushVector += away.normalized / away.magnitude;
+                }
+            }
+
+            if (pushVector != Vector3.zero)
+            {
+                Vector3 normalizedPush = pushVector.normalized;
+
+                // Esta unidad se impulsa a sí misma
+                combinedDirection += normalizedPush * 0.2f;
+
+                // Empujar a los demás suavemente
+                foreach (var col in overlaps)
+                {
+                    if (col.gameObject == gameObject) continue;
+
+                    AIPawn otherPawn = col.GetComponent<AIPawn>();
+                    if (otherPawn != null)
+                    {
+                        Vector3 away = col.transform.position - transform.position;
+                        if (away.sqrMagnitude > 0.01f)
+                        {
+                            Vector3 pushDir = away.normalized * 0.05f; // fuerza más sutil
+                            otherPawn.ApplyExternalPush(pushDir);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Normalizar si es necesario
         if (combinedDirection.magnitude > 1f)
         {
             combinedDirection.Normalize();
         }
 
+        // Movimiento normal
         transform.position += combinedDirection * m_Speed * Time.deltaTime;
 
+        // Movimiento externo acumulado (empuje mutuo)
+        if (m_ExternalPushVelocity != Vector3.zero)
+        {
+            transform.position += m_ExternalPushVelocity * Time.deltaTime;
+
+            // Disipar suavemente el empuje externo
+            m_ExternalPushVelocity = Vector3.MoveTowards(m_ExternalPushVelocity, Vector3.zero, 2f * Time.deltaTime);
+        }
+
+        // Llegada al nodo
         if (Vector3.Distance(transform.position, targetPosition) <= 0.15f)
         {
             if (m_CurrentNodeIndex == m_CurrentPath.Count - 1)
@@ -76,7 +133,11 @@ public class AIPawn : MonoBehaviour
         m_CurrentDestination = destination;
         m_CurrentPath = m_TilemapManager.FindPath(transform.position, destination);
         m_CurrentNodeIndex = 0;
-        OnNewPositionSelected.Invoke(m_CurrentPath[m_CurrentNodeIndex]);
+
+        if (m_CurrentPath.Count > 0)
+        {
+            OnNewPositionSelected.Invoke(m_CurrentPath[m_CurrentNodeIndex]);
+        }
     }
 
     public void Stop()
@@ -85,7 +146,6 @@ public class AIPawn : MonoBehaviour
         m_CurrentNodeIndex = 0;
     }
 
-    private Unit m_Unit;
     protected virtual bool GetPlayerStatus()
     {
         if (m_Unit != null)
@@ -103,9 +163,9 @@ public class AIPawn : MonoBehaviour
         float separationRadiusSqr = m_SeparationRadius * m_SeparationRadius;
         List<Unit> units = m_GameManager.GetFriendlyUnits(GetPlayerStatus());
 
-        foreach(var unit in units)
+        foreach (var unit in units)
         {
-            if (unit.gameObject == gameObject) continue;
+            if (unit == null || unit.gameObject == null || unit.gameObject == gameObject) continue;
 
             Vector3 opositeDirection = transform.position - unit.transform.position;
             float sqrDistance = opositeDirection.sqrMagnitude;
@@ -122,5 +182,18 @@ public class AIPawn : MonoBehaviour
     bool IsPathValid()
     {
         return m_CurrentPath.Count > 0 && m_CurrentNodeIndex < m_CurrentPath.Count;
+    }
+
+    // Método para recibir empuje desde otras unidades
+    public void ApplyExternalPush(Vector3 pushDirection)
+    {
+        m_ExternalPushVelocity += pushDirection;
+
+        // Limitar la fuerza acumulada del empuje
+        float maxPushMagnitude = 1f;
+        if (m_ExternalPushVelocity.magnitude > maxPushMagnitude)
+        {
+            m_ExternalPushVelocity = m_ExternalPushVelocity.normalized * maxPushMagnitude;
+        }
     }
 }
