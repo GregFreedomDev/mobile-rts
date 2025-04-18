@@ -8,5 +8,5 @@ public abstract class ActionSO: ScriptableObject
     public string ActionName;
     public string Guid = System.Guid.NewGuid().ToString();
 
-    public abstract void Execute(GameManager manager);
+    public abstract void Execute(GameManager gameManager);
 }

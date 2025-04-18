@@ -9,6 +9,7 @@ TagManager:
   - Building
   - GoldMine
   - AudioManager
+  - BaseGameManager
   layers:
   - Default
   - TransparentFX

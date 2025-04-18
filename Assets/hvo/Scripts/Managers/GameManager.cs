@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using hvo.Scripts.Managers;
+using HvO.UI;
 
 public enum ClickType
 {
@@ -14,7 +16,7 @@ public enum GameState
     Playing, Paused
 }
 
-public class GameManager : SingletonManager<GameManager>
+public class GameManager : BaseGameManager
 {
     [Header("UI")]
     [SerializeField] private PointToClick m_PointToMovePrefab;
@@ -25,7 +27,6 @@ public class GameManager : SingletonManager<GameManager>
     [SerializeField] private ConfirmationBar m_BuildConfirmationBar;
     [SerializeField] private TextPopupController m_TextPopupController;
     [SerializeField] private ResourceDataUI m_ResourceDataUI;
-    [SerializeField] private GameOverLayout m_GameOverLayout;
 
     [Header("Camera Settings")]
     [SerializeField] private float m_PanSpeed = 100;
@@ -37,40 +38,22 @@ public class GameManager : SingletonManager<GameManager>
     [Header("Resources")]
     [SerializeField] private Transform m_TreeContainer;
     [SerializeField] private GoldMine m_ActiveGoldMine;
-
-    [Header("Spawning")]
-    [SerializeField] private EnemySpawner m_EnemySpawner;
-
+    
     [Header("Audio")]
     [SerializeField] private AudioSettings m_PlacementAudioSettings;
     [SerializeField] private AudioSettings m_BgMusicAudioSettings;
-    [SerializeField] private AudioSettings m_WinAudioSettings;
-    [SerializeField] private AudioSettings m_LoseAudioSettings;
+
 
     public Unit ActiveUnit;
 
     private GameState m_GameState = GameState.Playing;
     private Unit m_KingUnit;
     private Tree[] m_Trees = new Tree[0];
-    private List<Unit> m_PlayerUnits = new();
-    private List<StructureUnit> m_PlayerBuildings = new();
-    private List<Unit> m_Enemies = new();
     private CameraController m_CameraController;
     private PlacementProcess m_PlacementProcess;
-    private int m_Gold = 0;
-    private int m_Wood = 0;
 
-    public int Gold => m_Gold;
-    public int Wood => m_Wood;
     public GoldMine ActiveGoldMine => m_ActiveGoldMine;
     public bool HasActiveUnit => ActiveUnit != null;
-    public Unit KingUnit => m_KingUnit;
-
-    void OnDestroy()
-    {
-        m_GameOverLayout.OnRestartClicked -= RestartGame;
-        m_GameOverLayout.OnQuitClicked -= GoToMenu;
-    }
 
     void Start()
     {
@@ -79,23 +62,13 @@ public class GameManager : SingletonManager<GameManager>
         ClearActionBarUI();
         AddResources(500, 500);
 
-        m_EnemySpawner.Startup();
         AudioManager.Get().PlayMusic(m_BgMusicAudioSettings);
-
-        m_GameOverLayout.OnRestartClicked += RestartGame;
-        m_GameOverLayout.OnQuitClicked += GoToMenu;
     }
 
     void Update()
     {
         if (m_GameState == GameState.Paused) return;
-
-        if (m_EnemySpawner.SpawnState == SpawnState.Finished && m_Enemies.Count == 0)
-        {
-            HandleGameOver(true);
-            return;
-        }
-
+        
         m_CameraController.Update();
 
         if (m_PlacementProcess != null)
@@ -108,7 +81,7 @@ public class GameManager : SingletonManager<GameManager>
         }
     }
 
-    public void RegisterUnit(Unit unit)
+    public override void RegisterUnit(Unit unit)
     {
         if (unit.IsPlayer)
         {
@@ -131,7 +104,7 @@ public class GameManager : SingletonManager<GameManager>
         }
     }
 
-    public void UnregisterUnit(Unit unit)
+    public override void UnregisterUnit(Unit unit)
     {
         if (unit.IsPlayer)
         {
@@ -168,15 +141,7 @@ public class GameManager : SingletonManager<GameManager>
         }
     }
 
-    public void AddResources(int gold, int wood)
-    {
-        m_Gold += gold;
-        m_Wood += wood;
-
-        m_ResourceDataUI.UpdateResourceDisplay(m_Gold, m_Wood);
-    }
-
-    public void ShowTextPopup(string text, Vector3 position, Color color)
+    public override void ShowTextPopup(string text, Vector3 position, Color color)
     {
         m_TextPopupController.Spawn(text, position, color);
     }
@@ -211,34 +176,7 @@ public class GameManager : SingletonManager<GameManager>
 
         return closestTree;
     }
-
-    IEnumerable<Unit> GetAllPlayerUnits()
-    {
-        return m_PlayerUnits.Concat(m_PlayerBuildings);
-    }
-
-    public Unit FindClosestUnit(Vector3 originPosition, float maxDistance, bool isPlayer)
-    {
-        IEnumerable<Unit> units = isPlayer ? GetAllPlayerUnits() : m_Enemies;
-        float sqrMaxDistance = maxDistance * maxDistance;
-        Unit closestUnit = null;
-        float closestDistanceSqr = float.MaxValue;
-
-        foreach (Unit unit in units)
-        {
-            if (unit.CurrentState == UnitState.Dead) continue;
-
-            float sqrDistance = (unit.transform.position - originPosition).sqrMagnitude;
-            if (sqrDistance < sqrMaxDistance && sqrDistance < closestDistanceSqr)
-            {
-                closestUnit = unit;
-                closestDistanceSqr = sqrDistance;
-            }
-        }
-
-        return closestUnit;
-    }
-
+    
     public StructureUnit FindClosestWoodStorage(Vector3 originPoint)
     {
         float closestDistacenSqr = float.MaxValue;
@@ -277,11 +215,6 @@ public class GameManager : SingletonManager<GameManager>
         }
 
         return closestUnit;
-    }
-
-    public List<Unit> GetFriendlyUnits(bool isPlayer)
-    {
-        return isPlayer ? m_PlayerUnits : m_Enemies;
     }
 
     public void StartBuildProcess(BuildActionSO buildAction)
@@ -658,7 +591,7 @@ public class GameManager : SingletonManager<GameManager>
         m_CameraController.LockCamera = false;
     }
 
-    bool TryDeductResources(int goldCost, int woodCost)
+    public bool TryDeductResources(int goldCost, int woodCost)
     {
         if (m_Gold >= goldCost && m_Wood >= woodCost)
         {
@@ -669,51 +602,12 @@ public class GameManager : SingletonManager<GameManager>
         return false;
     }
 
-    public void HandleGameOver(bool isVictory)
+    public void AddResources(int gold, int wood)
     {
-        if (isVictory)
-        {
-            AudioManager.Get().PlayMusic(m_WinAudioSettings);
-        }
-        else
-        {
-            AudioManager.Get().PlayMusic(m_LoseAudioSettings);
-        }
-
-        Time.timeScale = 0;
-        m_GameOverLayout.ShowGameOver(isVictory);
-        m_GameState = GameState.Paused;
+        base.AddResources(gold, wood);
+        m_ResourceDataUI.UpdateResourceDisplay(m_Gold, m_Wood);
     }
-
-    void RestartGame()
-    {
-        foreach (var unit in m_PlayerUnits)
-        {
-            Destroy(unit.gameObject);
-        }
-
-        foreach (var enemy in m_Enemies)
-        {
-            Destroy(enemy.gameObject);
-        }
-
-        foreach (var structure in m_PlayerBuildings)
-        {
-            Destroy(structure.gameObject);
-        }
-
-        m_PlayerUnits.Clear();
-        m_Enemies.Clear();
-        m_PlayerBuildings.Clear();
-
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
-
-    void GoToMenu()
-    {
-        SceneManager.LoadScene("MenuScene");
-    }
-
+    
     void OnGUI()
     {
         // if (ActiveUnit != null)

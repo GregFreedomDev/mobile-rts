@@ -96,7 +96,7 @@ public class HumanoidUnit : Unit
 
         if (IsKingUnit)
         {
-            m_GameManager.HandleGameOver(false);
+            MGameGameManager.HandleGameOver(false);
         }
     }
 }

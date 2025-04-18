@@ -11,8 +11,8 @@ public class TrainUnitActionSO : ActionSO
     public int GoldCost => m_GoldCost;
     public int WoodCost => m_WoodCost;
 
-    public override void Execute(GameManager manager)
+    public override void Execute(GameManager gameManager)
     {
-        manager.StartUnitTrainProcess(this);
+        gameManager.StartUnitTrainProcess(this);
     }
 }

@@ -15,11 +15,11 @@ public class UnitStanceActionSO : ActionSO
 
     public UnitStance UnitStance => m_UnitStance;
 
-    public override void Execute(GameManager manager)
+    public override void Execute(GameManager gameManager)
     {
-        if (manager.ActiveUnit != null)
+        if (gameManager.ActiveUnit != null)
         {
-            manager.ActiveUnit.SetStance(this);
+            gameManager.ActiveUnit.SetStance(this);
         }
     }
 }

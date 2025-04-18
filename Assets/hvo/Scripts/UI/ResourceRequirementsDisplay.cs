@@ -1,6 +1,7 @@
 
 
 
+using hvo.Scripts.Managers;
 using TMPro;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ public class ResourceRequirementsDisplay: MonoBehaviour
 
     public void UpdateColorRequirements(int reqGold, int reqWood)
     {
-        var manager = GameManager.Get();
+        var manager = BaseGameManager.Get();
         var greenColor = new Color(0, 0.8f, 0, 1f);
         m_GoldText.color = manager.Gold >= reqGold ? greenColor : Color.red;
         m_WoodText.color = manager.Wood >= reqWood ? greenColor : Color.red;

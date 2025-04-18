@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using hvo.Scripts.Managers;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,7 +17,7 @@ public class AIPawn : MonoBehaviour
     private List<Vector3> m_CurrentPath = new();
     private TilemapManager m_TilemapManager;
     private int m_CurrentNodeIndex;
-    private GameManager m_GameManager;
+    private BaseGameManager _mGameGameManager;
     private Unit m_Unit;
     private Vector3 m_ExternalPushVelocity;
 
@@ -25,7 +26,7 @@ public class AIPawn : MonoBehaviour
 
     void Start()
     {
-        m_GameManager = GameManager.Get();
+        _mGameGameManager = FindObjectOfType<GameManager>() ?? (BaseGameManager)FindObjectOfType<BattleGameManager>();
         m_TilemapManager = TilemapManager.Get();
         m_Unit = GetComponent<Unit>();
     }
@@ -161,7 +162,7 @@ public class AIPawn : MonoBehaviour
     {
         Vector3 separationVector = Vector3.zero;
         float separationRadiusSqr = m_SeparationRadius * m_SeparationRadius;
-        List<Unit> units = m_GameManager.GetFriendlyUnits(GetPlayerStatus());
+        List<Unit> units = _mGameGameManager.GetFriendlyUnits(GetPlayerStatus());
 
         foreach (var unit in units)
         {

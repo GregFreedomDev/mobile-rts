@@ -1,6 +1,7 @@
 
 
 using System.Collections;
+using hvo.Scripts.Managers;
 using UnityEngine;
 
 public enum UnitState
@@ -37,7 +38,7 @@ public abstract class Unit : MonoBehaviour
     [SerializeField] protected AudioSettings m_TerminationAudioSettings;
 
     public bool IsTargeted;
-    protected GameManager m_GameManager;
+    protected BaseGameManager MGameGameManager;
     protected AudioManager m_AudioManager;
     protected Animator m_Animator;
     protected AIPawn m_AIPawn;
@@ -84,7 +85,7 @@ public abstract class Unit : MonoBehaviour
         }
 
         m_Collider = GetComponent<CapsuleCollider2D>();
-        m_GameManager = GameManager.Get();
+        MGameGameManager = BaseGameManager.Get();
         m_AudioManager = AudioManager.Get();
         m_SpriteRenderer = GetComponent<SpriteRenderer>();
         m_OriginalMaterial = m_SpriteRenderer.material;
@@ -130,7 +131,7 @@ public abstract class Unit : MonoBehaviour
         {
             if (m_Actions[i] == stanceActionSO)
             {
-                m_GameManager.FocusActionUI(i);
+                MGameGameManager.FocusActionUI(i);
                 return;
             }
         }
@@ -167,7 +168,7 @@ public abstract class Unit : MonoBehaviour
         {
             if (m_Actions[i] is UnitStanceActionSO stanceAction && stanceAction.UnitStance == m_CurrentStance)
             {
-                m_GameManager.FocusActionUI(i);
+                MGameGameManager.FocusActionUI(i);
                 return;
             }
         }
@@ -231,12 +232,12 @@ public abstract class Unit : MonoBehaviour
 
     protected virtual void RegisterUnit()
     {
-        m_GameManager.RegisterUnit(this);
+        MGameGameManager.RegisterUnit(this);
     }
 
     protected virtual void UnregisterUnit()
     {
-        m_GameManager.UnregisterUnit(this);
+        MGameGameManager.UnregisterUnit(this);
     }
 
     protected virtual bool TryFindClosestFoe(out Unit foe)
@@ -244,7 +245,7 @@ public abstract class Unit : MonoBehaviour
         if (Time.time >= m_NextUnitDetectionTime)
         {
             m_NextUnitDetectionTime = Time.time + m_UnitDetectionCheckRate;
-            foe = m_GameManager.FindClosestUnit(transform.position, m_ObjectDetectionRadius, !IsPlayer);
+            foe = MGameGameManager.FindClosestUnit(transform.position, m_ObjectDetectionRadius, !IsPlayer);
             return foe != null;
         }
         else
@@ -304,7 +305,7 @@ public abstract class Unit : MonoBehaviour
             SetTarget(damager);
         }
 
-        m_GameManager.ShowTextPopup(
+        MGameGameManager.ShowTextPopup(
             damage.ToString(),
             GetTopPosition(),
             Color.red

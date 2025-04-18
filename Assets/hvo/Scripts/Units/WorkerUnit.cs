@@ -28,44 +28,43 @@ public class WorkerUnit : HumanoidUnit
     public bool IsHoldingGold => m_GoldCollected > 0;
     public bool IsHoldingResource => IsHoldingWood || IsHoldingGold;
 
+    
     protected override void UpdateBehaviour()
     {
-        if (CurrentTask == UnitTask.Build && HasTarget)
+        var gameManager = (MGameGameManager as GameManager);
+        switch (CurrentTask)
         {
-            CheckForConstruction();
-        }
-        else if (
-            CurrentTask == UnitTask.Chop
-            && m_AssignedTree != null
-            && m_WoodCollected < m_WoodCapacity
-        )
-        {
-            HandleChoppingTask();
-        }
-        else if (
-            CurrentTask == UnitTask.Mine
-            && m_AssignedMine != null
-            && !IsHoldingGold
-        )
-        {
-            HandleMinningTask();
-        }
-        else if (CurrentTask == UnitTask.ReturnResource)
-        {
-            if (IsHoldingGold && TryToReturnResources(m_AssignedGoldStorage))
-            {
-                m_GameManager.ShowTextPopup(m_GoldCollected.ToString(), GetTopPosition(), Color.yellow);
-                m_GameManager.AddResources(m_GoldCollected, 0);
+            case UnitTask.Build when HasTarget:
+                CheckForConstruction();
+                break;
+            case UnitTask.Chop
+                when m_AssignedTree != null
+                     && m_WoodCollected < m_WoodCapacity:
+                HandleChoppingTask();
+                break;
+            case UnitTask.Mine
+                when m_AssignedMine != null
+                     && !IsHoldingGold:
+                HandleMinningTask();
+                break;
+            case UnitTask.ReturnResource when IsHoldingGold && TryToReturnResources(m_AssignedGoldStorage):
+                MGameGameManager.ShowTextPopup(m_GoldCollected.ToString(), GetTopPosition(), Color.yellow);
+                MGameGameManager.AddResources(m_GoldCollected, 0);
                 m_GoldCollected = 0;
-                MoveTo(m_GameManager.ActiveGoldMine.GetBottomPosition());
+                MoveTo(gameManager.ActiveGoldMine.GetBottomPosition());
                 SetTask(UnitTask.Mine);
-            }
-            else if (IsHoldingWood && TryToReturnResources(m_AssignedWoodStorage, 1f))
+                break;
+            case UnitTask.ReturnResource:
             {
-                m_GameManager.ShowTextPopup(m_WoodCollected.ToString(), GetTopPosition(), Color.green);
-                m_GameManager.AddResources(0, m_WoodCollected);
-                m_WoodCollected = 0;
-                TryMoveToClosestTree();
+                if (IsHoldingWood && TryToReturnResources(m_AssignedWoodStorage, 1f))
+                {
+                    MGameGameManager.ShowTextPopup(m_WoodCollected.ToString(), GetTopPosition(), Color.green);
+                    MGameGameManager.AddResources(0, m_WoodCollected);
+                    m_WoodCollected = 0;
+                    TryMoveToClosestTree();
+                }
+
+                break;
             }
         }
 
@@ -120,11 +119,12 @@ public class WorkerUnit : HumanoidUnit
 
     public void OnLeaveMine()
     {
+        var gameManager = (MGameGameManager as GameManager);
         Show();
         m_GoldCollected = m_GoldCapacity;
         SetState(UnitState.Idle);
 
-        m_AssignedGoldStorage = m_GameManager.FindClosestGoldStorage(transform.position);
+        m_AssignedGoldStorage = gameManager.FindClosestGoldStorage(transform.position);
 
         if (m_AssignedGoldStorage != null)
         {
@@ -250,9 +250,11 @@ public class WorkerUnit : HumanoidUnit
 
     void HandleChoppingFinished()
     {
+        var gameManager = (MGameGameManager as GameManager);
+
         m_Animator.SetBool("IsChopping", false);
 
-        m_AssignedWoodStorage = m_GameManager.FindClosestWoodStorage(transform.position);
+        m_AssignedWoodStorage = gameManager.FindClosestWoodStorage(transform.position);
 
         if (m_AssignedWoodStorage != null)
         {
@@ -283,7 +285,9 @@ public class WorkerUnit : HumanoidUnit
 
     void TryMoveToClosestTree()
     {
-        var closestTree = m_GameManager.FindClosestUnclaimedTree(transform.position);
+        var gameManager = (MGameGameManager as GameManager);
+
+        var closestTree = gameManager.FindClosestUnclaimedTree(transform.position);
 
         if (closestTree != null)
         {

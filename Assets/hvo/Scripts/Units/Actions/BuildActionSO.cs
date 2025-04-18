@@ -29,8 +29,8 @@ public class BuildActionSO: ActionSO
     public int WoodCost => m_WoodCost;
 
 
-    public override void Execute(GameManager manager)
+    public override void Execute(GameManager gameManager)
     {
-        manager.StartBuildProcess(this);
+        gameManager.StartBuildProcess(this);
     }
 }
