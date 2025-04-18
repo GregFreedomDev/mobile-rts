@@ -1,0 +1,55 @@
+Index: Assets/hvo/Scripts/AI/AIPawn.cs
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>using System.Collections.Generic;\nusing System.Linq;\nusing UnityEngine;\nusing UnityEngine.Events;\n\npublic class AIPawn : MonoBehaviour\n{\n    [SerializeField]\n    private float m_Speed = 5f;\n\n    [Header(\"Separation\")]\n    [SerializeField] private float m_SeparationRadius = 3f;\n    [SerializeField] private float m_SeparationForce = 3f;\n    [SerializeField] private float m_CombatSeparationMultiplier = 2f;\n    [SerializeField] private float m_MinimumSeparationDistance = 1.5f;\n    [SerializeField] private bool m_ApplySeparation = true;\n\n    private Vector3? m_CurrentDestination;\n    private List<Vector3> m_CurrentPath = new();\n    private TilemapManager m_TilemapManager;\n    private int m_CurrentNodeIndex;\n    private GameManager m_GameManager;\n    private Unit m_Unit;\n    private bool? m_IsPlayer;\n\n    public UnityAction<Vector3> OnNewPositionSelected = delegate { };\n    public UnityAction OnDestinationReached = delegate { };\n\n    void Start()\n    {\n        m_GameManager = GameManager.Get();\n        m_TilemapManager = TilemapManager.Get();\n        \n        // Inicializar la unidad y su estado de jugador al inicio\n        m_Unit = GetComponent<Unit>();\n        if (m_Unit != null)\n        {\n            m_IsPlayer = m_Unit.IsPlayer;\n        }\n    }\n\n    void Update()\n    {\n        if (!IsPathValid())\n        {\n            m_CurrentDestination = null;\n            return;\n        }\n\n        // Calcular la separación primero\n        Vector3 separationVector = (m_ApplySeparation && m_Unit != null) ? CalculateSeparation() : Vector3.zero;\n        \n        // Si estamos en combate y muy cerca de otra unidad, priorizar la separación\n        bool isInCombat = m_Unit != null && m_Unit.CurrentState == UnitState.Attacking;\n        bool needsForcedSeparation = false;\n        \n        if (isInCombat)\n        {\n            var nearbyUnits = Physics2D.OverlapCircleAll(transform.position, m_MinimumSeparationDistance);\n            foreach (var collider in nearbyUnits)\n            {\n                if (collider.gameObject != gameObject && collider.GetComponent<Unit>() != null)\n                {\n                    needsForcedSeparation = true;\n                    break;\n                }\n            }\n        }\n\n        Vector3 targetPosition = m_CurrentPath[m_CurrentNodeIndex];\n        Vector3 direction = (targetPosition - transform.position).normalized;\n        Vector3 combinedDirection;\n\n        if (needsForcedSeparation)\n        {\n            // Si estamos demasiado cerca, priorizar la separación\n            combinedDirection = separationVector.normalized * m_SeparationForce * 2f;\n        }\n        else\n        {\n            combinedDirection = direction + separationVector;\n            if (combinedDirection.magnitude > 1f)\n            {\n                combinedDirection.Normalize();\n            }\n        }\n\n        transform.position += combinedDirection * m_Speed * Time.deltaTime;\n        \n        // Verificar si hemos llegado al destino\n        if (Vector3.Distance(transform.position, targetPosition) <= 0.15f)\n        {\n            if (m_CurrentNodeIndex == m_CurrentPath.Count - 1)\n            {\n                OnDestinationReached.Invoke();\n                m_CurrentPath = new();\n            }\n            else\n            {\n                m_CurrentNodeIndex++;\n                OnNewPositionSelected.Invoke(m_CurrentPath[m_CurrentNodeIndex]);\n            }\n        }\n    }\n\n    public void SetDestination(Vector3 destination)\n    {\n        if (m_CurrentDestination.HasValue && Vector3.Distance(m_CurrentDestination.Value, destination) < 0.1f)\n        {\n            return;\n        }\n\n        m_CurrentDestination = destination;\n        m_CurrentPath = m_TilemapManager.FindPath(transform.position, destination);\n        m_CurrentNodeIndex = 0;\n\n        if (m_CurrentPath.Count > 0)\n        {\n            OnNewPositionSelected.Invoke(m_CurrentPath[m_CurrentNodeIndex]);\n        }\n    }\n\n    public void Stop()\n    {\n        m_CurrentPath.Clear();\n        m_CurrentNodeIndex = 0;\n    }\n\n    protected virtual bool GetPlayerStatus()\n    {\n        // Si ya tenemos el estado guardado, lo devolvemos\n        if (m_IsPlayer.HasValue)\n        {\n            return m_IsPlayer.Value;\n        }\n\n        // Si no tenemos la unidad, intentamos obtenerla\n        if (m_Unit == null)\n        {\n            m_Unit = GetComponent<Unit>();\n            if (m_Unit != null)\n            {\n                m_IsPlayer = m_Unit.IsPlayer;\n                return m_IsPlayer.Value;\n            }\n        }\n\n        // Si aún no tenemos la unidad, asumimos que no es jugador\n        return false;\n    }\n\n    Vector3 CalculateSeparation()\n    {\n        if (m_GameManager == null) return Vector3.zero;\n\n        Vector3 separationVector = Vector3.zero;\n        float currentSeparationRadius = m_SeparationRadius;\n        float currentSeparationForce = m_SeparationForce;\n\n        // Aumentar la separación si la unidad está en combate\n        if (m_Unit != null && m_Unit.CurrentState == UnitState.Attacking)\n        {\n            currentSeparationRadius *= m_CombatSeparationMultiplier;\n            currentSeparationForce *= m_CombatSeparationMultiplier;\n        }\n\n        float separationRadiusSqr = currentSeparationRadius * currentSeparationRadius;\n        \n        bool isPlayer = GetPlayerStatus();\n        List<Unit> units = m_GameManager.GetFriendlyUnits(isPlayer);\n        \n        if (units == null) return Vector3.zero;\n\n        int nearbyUnits = 0;\n        foreach(var unit in units)\n        {\n            if (unit == null || unit.gameObject == null || unit.gameObject == gameObject) continue;\n\n            Vector3 oppositeDirection = transform.position - unit.transform.position;\n            float sqrDistance = oppositeDirection.sqrMagnitude;\n\n            if (sqrDistance < separationRadiusSqr && sqrDistance > 0)\n            {\n                // Dar más peso cuando están muy cerca\n                float weight = (1.0f - (sqrDistance / separationRadiusSqr));\n                weight = weight * weight; // Peso cuadrático para hacer la separación más fuerte cuando están muy cerca\n                separationVector += oppositeDirection.normalized * weight * currentSeparationForce;\n                nearbyUnits++;\n            }\n        }\n\n        // Aplicar una fuerza mínima si hay unidades muy cercanas\n        if (nearbyUnits > 0)\n        {\n            float minForce = currentSeparationForce * 0.5f;\n            if (separationVector.magnitude < minForce)\n            {\n                separationVector = separationVector.normalized * minForce;\n            }\n        }\n\n        return separationVector;\n    }\n\n    bool IsPathValid()\n    {\n        return m_CurrentPath.Count > 0 && m_CurrentNodeIndex < m_CurrentPath.Count;\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Assets/hvo/Scripts/AI/AIPawn.cs b/Assets/hvo/Scripts/AI/AIPawn.cs
+--- a/Assets/hvo/Scripts/AI/AIPawn.cs	(revision c8b59960acc8f5e4a7677a3e873416830a7df20e)
++++ b/Assets/hvo/Scripts/AI/AIPawn.cs	(date 1744421374701)
+@@ -46,6 +46,7 @@
+             m_CurrentDestination = null;
+             return;
+         }
++        
+ 
+         // Calcular la separación primero
+         Vector3 separationVector = (m_ApplySeparation && m_Unit != null) ? CalculateSeparation() : Vector3.zero;
+@@ -84,7 +85,36 @@
+                 combinedDirection.Normalize();
+             }
+         }
++        
++        if (needsForcedSeparation)
++        {
++            // Detecta si hay muchas unidades colisionando directamente
++            var overlaps = Physics2D.OverlapCircleAll(transform.position, 0.4f);
++            if (overlaps.Length > 2) // tú mismo + al menos 2 más
++            {
++                Vector3 escape = Vector3.zero;
++                for (int i = 0; i < 16; i++) // más ángulos, más chance de escapar
++                {
++                    float angle = i * 22.5f;
++                    Vector3 dir = Quaternion.Euler(0, 0, angle) * Vector3.right;
++                    Vector3 checkPos = transform.position + dir * 0.75f;
+ 
++                    if (Physics2D.OverlapCircle(checkPos, 0.3f) == null)
++                    {
++                        escape = dir;
++                        break;
++                    }
++                }
++
++                if (escape != Vector3.zero)
++                {
++                    combinedDirection = escape.normalized;
++                }
++            }
++        }
++
++
++
+         transform.position += combinedDirection * m_Speed * Time.deltaTime;
+         
+         // Verificar si hemos llegado al destino
