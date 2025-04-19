@@ -1,5 +1,6 @@
 
 
+using System;
 using System.Collections;
 using hvo.Scripts.Managers;
 using UnityEngine;
@@ -17,6 +18,11 @@ public enum UnitTask
 public enum DestinationSource
 {
     CodeTriggered, PlayerClick
+}
+
+public enum UnitType
+{
+    Warrior, Archer, Goblin, Demolisher
 }
 
 public abstract class Unit : MonoBehaviour
@@ -50,6 +56,7 @@ public abstract class Unit : MonoBehaviour
     protected float m_NextAutoAttackTime;
     protected int m_CurrentHealth;
     protected UnitStance m_CurrentStance = UnitStance.Offensive;
+    public Vector3Int GridPosition { get; set; } 
 
     public UnitState CurrentState { get; protected set; } = UnitState.Idle;
     public UnitTask CurrentTask { get; protected set; } = UnitTask.None;
@@ -67,6 +74,11 @@ public abstract class Unit : MonoBehaviour
 
     protected virtual void Start()
     {
+        if (!TryGetComponent<RenderSorter>(out _))
+        {
+            gameObject.AddComponent<RenderSorter>();
+        }
+        
         RegisterUnit();
     }
 
@@ -93,7 +105,7 @@ public abstract class Unit : MonoBehaviour
 
         m_CurrentHealth = m_Health;
     }
-
+    
     void OnDestroy()
     {
         if (m_AIPawn != null)
@@ -136,7 +148,7 @@ public abstract class Unit : MonoBehaviour
             }
         }
     }
-
+    
     public void Hide()
     {
         m_SpriteRenderer.enabled = false;

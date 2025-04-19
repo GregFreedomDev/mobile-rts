@@ -54,6 +54,11 @@ namespace hvo.Scripts.Managers
         {
             return m_PlayerUnits;
         }
+
+        public IEnumerable<Unit> GetAllUnits()
+        {
+            return m_PlayerUnits.Concat(m_Enemies);
+        }
         
         public List<Unit> GetFriendlyUnits(bool isPlayer)
         {

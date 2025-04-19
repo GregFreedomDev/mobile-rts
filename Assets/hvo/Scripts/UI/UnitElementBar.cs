@@ -1,4 +1,5 @@
 using hvo.Scripts.Managers;
+using hvo.Scripts.Units;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -20,13 +21,13 @@ namespace HvO.UI
         private bool isDragging;
         private bool isPointerOver;
         private bool isValidPosition;
-        private BaseGameManager _gameGameManager;
+        private BattleGameManager battleGameManager;
 
         void Start()
         {
             canvasGroup = GetComponent<CanvasGroup>();
             buttonText = GetComponentInChildren<TextMeshProUGUI>();
-            _gameGameManager = BaseGameManager.Get();
+            battleGameManager = BaseGameManager.Get() as BattleGameManager;
         }
 
         public void Initialize(GameObject unitPrefab)
@@ -131,8 +132,19 @@ namespace HvO.UI
 
             Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPosition.z = 0;
+            
+            Vector3Int cellPos = battleGameManager.BattleGrid.Tilemap.WorldToCell(worldPosition);
 
-            GameObject newUnit = Instantiate(unitPrefab, worldPosition, Quaternion.identity);
+            if (battleGameManager.BattleGrid.CanPlaceUnit(cellPos, unitPrefab.GetComponent<Unit>()))
+            {
+                GameObject newUnit = Instantiate(unitPrefab, worldPosition, Quaternion.identity);
+                newUnit.transform.position = battleGameManager.BattleGrid.Tilemap.GetCellCenterWorld(cellPos);
+                var unitComp = newUnit.GetComponent<Unit>();
+                unitComp.GridPosition = cellPos;
+                newUnit.AddComponent<UnitDragger>();
+                battleGameManager.BattleGrid.RegisterUnit(cellPos, newUnit.GetComponent<Unit>());
+            }
+            
 
             /*     if (gameManager != null && gameManager.CameraController != null)
                  {

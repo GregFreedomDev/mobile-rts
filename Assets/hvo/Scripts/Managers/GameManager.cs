@@ -47,7 +47,6 @@ public class GameManager : BaseGameManager
     public Unit ActiveUnit;
 
     private GameState m_GameState = GameState.Playing;
-    private Unit m_KingUnit;
     private Tree[] m_Trees = new Tree[0];
     private CameraController m_CameraController;
     private PlacementProcess m_PlacementProcess;
@@ -89,10 +88,6 @@ public class GameManager : BaseGameManager
             {
                 m_PlayerBuildings.Add(unit as StructureUnit);
             }
-            else if (unit.IsKingUnit)
-            {
-                m_KingUnit = unit;
-            }
             else
             {
                 m_PlayerUnits.Add(unit);
@@ -125,10 +120,6 @@ public class GameManager : BaseGameManager
             if (unit.IsBuilding)
             {
                 m_PlayerBuildings.Remove(unit as StructureUnit);
-            }
-            else if (unit.IsKingUnit)
-            {
-                m_KingUnit = null;
             }
             else
             {

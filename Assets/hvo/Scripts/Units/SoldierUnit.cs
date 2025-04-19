@@ -1,6 +1,7 @@
 
 
 
+using hvo.Scripts.Managers;
 using UnityEngine;
 
 public class SoldierUnit : HumanoidUnit
@@ -64,6 +65,8 @@ public class SoldierUnit : HumanoidUnit
 
     protected override void UpdateBehaviour()
     {
+        if (!((BattleGameManager)MGameGameManager).IsBattleStarted) return;
+        
         if (CurrentState == UnitState.Idle || CurrentState == UnitState.Moving)
         {
             if (HasTarget)

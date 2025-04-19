@@ -1,5 +1,6 @@
 
 
+using hvo.Scripts.Managers;
 using UnityEngine;
 
 public class EnemyUnit : HumanoidUnit
@@ -10,6 +11,9 @@ public class EnemyUnit : HumanoidUnit
 
     protected override void UpdateBehaviour()
     {
+        
+        if (!((BattleGameManager)MGameGameManager).IsBattleStarted) return;
+
         switch (CurrentState)
         {
             case UnitState.Idle:
