@@ -1,6 +1,7 @@
 
 
 
+using System;
 using UnityEngine;
 
 public class CameraController
@@ -8,7 +9,17 @@ public class CameraController
     private float m_PanSpeed;
     private float m_MobilePanSpeed;
 
-    public bool LockCamera { get; set; }
+    private bool _lockCamera;
+
+    public bool LockCamera
+    {
+        get => _lockCamera;
+        set
+        {
+            _lockCamera = value;
+            Console.WriteLine($"LockCamera set to: {_lockCamera}");
+        }
+    }
 
     public CameraController(float panSpeed, float mobilePanSpeed)
     {

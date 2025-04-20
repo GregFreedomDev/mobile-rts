@@ -30,8 +30,8 @@ public class CameraResizer : MonoBehaviour
         }
 
         // Centrar la cámara en la grilla
-        float camX = (gridWidth * tileSize) / 2f - 0.5f;
-        float camY = (gridHeight * tileSize) / 2f - 0.5f;
+        float camX = (gridWidth * tileSize) / 2f;
+        float camY = (gridHeight * tileSize) / 2f;
         cam.transform.position = new Vector3(camX, camY, -10f);
     }
 }

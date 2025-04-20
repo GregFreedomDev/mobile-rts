@@ -78,7 +78,7 @@ public abstract class Unit : MonoBehaviour
         {
             gameObject.AddComponent<RenderSorter>();
         }
-        
+        MGameGameManager = BaseGameManager.Get();
         RegisterUnit();
     }
 
@@ -97,7 +97,6 @@ public abstract class Unit : MonoBehaviour
         }
 
         m_Collider = GetComponent<CapsuleCollider2D>();
-        MGameGameManager = BaseGameManager.Get();
         m_AudioManager = AudioManager.Get();
         m_SpriteRenderer = GetComponent<SpriteRenderer>();
         m_OriginalMaterial = m_SpriteRenderer.material;
@@ -242,12 +241,12 @@ public abstract class Unit : MonoBehaviour
         m_AudioManager.PlaySound(m_TerminationAudioSettings, transform.position);
     }
 
-    protected virtual void RegisterUnit()
+    protected void RegisterUnit()
     {
         MGameGameManager.RegisterUnit(this);
     }
 
-    protected virtual void UnregisterUnit()
+    protected void UnregisterUnit()
     {
         MGameGameManager.UnregisterUnit(this);
     }

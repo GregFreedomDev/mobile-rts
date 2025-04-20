@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -93,10 +94,16 @@ public class HumanoidUnit : Unit
     {
         yield return new WaitForSeconds(delay);
         Destroy(gameObject);
-
-        if (IsKingUnit)
+        var countPlayerUnits = MGameGameManager.GetAllPlayerUnits().ToList().Count;
+        var countEnemiesUnits = MGameGameManager.GetAllEnemiesUnits().ToList().Count;
+        switch (countPlayerUnits)
         {
-            MGameGameManager.HandleGameOver(false);
+            case 0 when countEnemiesUnits > 0:
+                MGameGameManager.HandleGameOver(false);
+                break;
+            case > 0 when countEnemiesUnits == 0:
+                MGameGameManager.HandleGameOver(true);
+                break;
         }
     }
 }

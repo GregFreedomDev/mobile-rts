@@ -50,9 +50,14 @@ namespace hvo.Scripts.Managers
             return closestUnit;
         }
         
-        IEnumerable<Unit> GetAllPlayerUnits()
+        public IEnumerable<Unit> GetAllPlayerUnits()
         {
             return m_PlayerUnits;
+        }
+        
+        public IEnumerable<Unit> GetAllEnemiesUnits()
+        {
+            return m_Enemies;
         }
 
         public IEnumerable<Unit> GetAllUnits()

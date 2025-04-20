@@ -18,6 +18,7 @@ public class RenderSorter : MonoBehaviour
 
     void LateUpdate()
     {
+        if (battleGameManager == null) return;
         allUnits.Clear();
 
         // Suponiendo que tienes acceso a estas listas desde tu GameManager

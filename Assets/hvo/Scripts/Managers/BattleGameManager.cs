@@ -16,6 +16,7 @@ namespace hvo.Scripts.Managers
         [SerializeField] private TileBase m_floorTile;
         [SerializeField] private Tilemap m_Tilemap;
         [SerializeField] private Button m_ButtonPrefab;
+        [SerializeField] private TextPopupController m_TextPopupController;
 
         private BattleGrid m_BattleGrid;
         private int m_Width = 14, m_Height = 5;
@@ -51,7 +52,6 @@ namespace hvo.Scripts.Managers
         private void GenerateBattleGrid()
         {
             m_BattleGrid.GenerateGrid();
-            m_BattleGrid.CenterMap();
         }
         
         private void InitializePanelUnitUI()
@@ -72,6 +72,11 @@ namespace hvo.Scripts.Managers
                     Debug.LogWarning($"No se pudo cargar el prefab de la unidad: {prefabName}");
                 }
             }
+        }
+        
+        public override void ShowTextPopup(string text, Vector3 position, Color color)
+        {
+            m_TextPopupController.Spawn(text, position, color);
         }
 
         public override void RegisterUnit(Unit unit)

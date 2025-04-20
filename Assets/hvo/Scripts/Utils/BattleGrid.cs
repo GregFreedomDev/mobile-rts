@@ -32,13 +32,6 @@ namespace hvo.Scripts.Utils
                 }
             }
         }
-
-        public void CenterMap()
-        {
-            Vector3 offset = new Vector3(-m_Width / 2f + 0.5f, -m_Height / 2f + 0.5f, 0f);
-            m_Tilemap.transform.position = offset;
-        }
-
         public bool CanPlaceUnit(Vector3Int cellPos, Unit unit)
         {
             if (!IsInBounds(cellPos)) return false;
