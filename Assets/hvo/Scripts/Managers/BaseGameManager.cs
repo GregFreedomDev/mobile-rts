@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,14 +19,16 @@ namespace hvo.Scripts.Managers
         protected List<StructureUnit> m_PlayerBuildings = new();
         protected int m_Gold = 0;
         protected int m_Wood = 0;
-        private GameState m_GameState = GameState.Playing;
+        protected GameState m_GameState = GameState.Playing;
 
         public int Gold => m_Gold;
         public int Wood => m_Wood;
 
-        private void Start()
+        public void Start()
         {
-            m_GameOverLayout.OnQuitClicked += GoToMenu;
+            m_GameOverLayout.OnBackClicked += GoToVillage;
+            m_GameOverLayout.OnRetryClicked += GoToBattle;
+            m_GameOverLayout.OnContinueClicked += ContinueNextLevel;
         }
 
         public Unit FindClosestUnit(Vector3 originPosition, float maxDistance, bool isPlayer)
@@ -70,7 +73,7 @@ namespace hvo.Scripts.Managers
             return isPlayer ? m_PlayerUnits : m_Enemies;
         }
         
-        public void AddResources(int gold, int wood)
+        public virtual void AddResources(int gold, int wood)
         {
             m_Gold += gold;
             m_Wood += wood;
@@ -82,22 +85,37 @@ namespace hvo.Scripts.Managers
             if (isVictory)
             {
                 AudioManager.Get().PlayMusic(m_WinAudioSettings);
+                m_GameOverLayout.ShowVictory(m_Gold, 3, new List<Reward> {new Reward("Gold", 100), new Reward("Exp", 100)}, 5);
             }
             else
             {
+                m_GameOverLayout.ShowDefeat(m_Gold);
                 AudioManager.Get().PlayMusic(m_LoseAudioSettings);
             }
 
             Time.timeScale = 0;
-            m_GameOverLayout.ShowGameOver(isVictory);
             m_GameState = GameState.Paused;
         }
         
-        void GoToMenu()
+        void GoToVillage()
         {
-            SceneManager.LoadScene("MenuScene");
+            Debug.Log("GoToVillage");
+            SceneManager.LoadScene("PlayScene");
+        }
+
+        void ContinueNextLevel()
+        {
+            Debug.Log("ContinueNextLevel");
+
         }
         
+        
+        protected virtual void GoToBattle()
+        {
+            Debug.Log("Battle Scene");
+            SceneManager.LoadScene("BattleScene");
+        }
+
         public virtual void FocusActionUI(int index)
         { }
         
@@ -112,7 +130,9 @@ namespace hvo.Scripts.Managers
 
         void OnDestroy()
         {
-            m_GameOverLayout.OnQuitClicked -= GoToMenu;
+            m_GameOverLayout.OnBackClicked -= GoToVillage;
+            m_GameOverLayout.OnRetryClicked -= GoToBattle;
+            m_GameOverLayout.OnContinueClicked -= ContinueNextLevel;
         }
     }
 }

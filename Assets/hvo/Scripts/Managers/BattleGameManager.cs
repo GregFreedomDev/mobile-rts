@@ -35,10 +35,21 @@ namespace hvo.Scripts.Managers
 
         private void Start()
         {
+            base.Start();
+            base.AddResources(500,500);
             InitializePanelUnitUI();
             m_BattleGrid = new BattleGrid(m_Width, m_Height, m_floorTile, m_Tilemap);
             GenerateBattleGrid();
             m_ButtonPrefab.onClick.AddListener(StartBattle);
+        }
+
+        protected void ResetStartBattle()
+        {
+            Time.timeScale = 1;
+            m_GameState = GameState.Playing;
+            m_IsBattleStarted = false;
+            m_PlayerUnits.Clear();
+            m_Enemies.Clear();
         }
 
         private void StartBattle()
@@ -53,7 +64,13 @@ namespace hvo.Scripts.Managers
         {
             m_BattleGrid.GenerateGrid();
         }
-        
+
+        protected override void GoToBattle()
+        {
+            ResetStartBattle();
+            base.GoToBattle();
+        }
+
         private void InitializePanelUnitUI()
         {
             GameObject panelInstance = Instantiate(m_UnitListPanelPrefab, m_MainCanvas.transform);

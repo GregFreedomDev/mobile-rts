@@ -25,11 +25,6 @@ public class StructureUnit : Unit
         }
     }
 
-    void OnDestroy()
-    {
-        UpdateWalkability();
-    }
-
     public virtual void OnConstructionFinished()
     {
         m_BuildingProcess = null;

@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Linq;
 using hvo.Scripts.Managers;
 using HvO.UI;
+using UnityEngine.UI;
 
 public enum ClickType
 {
@@ -27,6 +28,7 @@ public class GameManager : BaseGameManager
     [SerializeField] private ConfirmationBar m_BuildConfirmationBar;
     [SerializeField] private TextPopupController m_TextPopupController;
     [SerializeField] private ResourceDataUI m_ResourceDataUI;
+    [SerializeField] private Button m_buttonBattle;
 
     [Header("Camera Settings")]
     [SerializeField] private float m_PanSpeed = 100;
@@ -60,7 +62,7 @@ public class GameManager : BaseGameManager
         m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
         ClearActionBarUI();
         AddResources(500, 500);
-
+        m_buttonBattle.onClick.AddListener(GoToBattle);
         AudioManager.Get().PlayMusic(m_BgMusicAudioSettings);
     }
 
@@ -593,7 +595,7 @@ public class GameManager : BaseGameManager
         return false;
     }
 
-    public void AddResources(int gold, int wood)
+    public override void AddResources(int gold, int wood)
     {
         base.AddResources(gold, wood);
         m_ResourceDataUI.UpdateResourceDisplay(m_Gold, m_Wood);

@@ -39,6 +39,8 @@ public class TilemapManager : SingletonManager<TilemapManager>
 
     public bool CanWalkAtTile(Vector3Int tilePosition)
     {
+        if (m_WalkableTilemap == null) return false;
+
         return
             m_WalkableTilemap.HasTile(tilePosition) &&
             !IsInUnreachableTilemap(tilePosition) &&
