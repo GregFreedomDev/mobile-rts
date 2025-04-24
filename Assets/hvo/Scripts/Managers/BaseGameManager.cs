@@ -31,28 +31,46 @@ namespace hvo.Scripts.Managers
             m_GameOverLayout.OnContinueClicked += ContinueNextLevel;
         }
 
-        public Unit FindClosestUnit(Vector3 originPosition, float maxDistance, bool isPlayer)
+        //update this method, actualmente estan eligiendo siempre el mas cercano. Pero deberia elegir el mas cercano que no está siendo atacado. Hay que pensarlo bien,
+        //a veces conviene que vaya a atacar a los que están mas atras y que no
+        //no tienen atacante asignado
+        public Unit FindClosestUntargetedUnit(Vector3 originPosition, bool isPlayer)
         {
             IEnumerable<Unit> units = isPlayer ? GetAllPlayerUnits() : m_Enemies;
-            float sqrMaxDistance = maxDistance * maxDistance;
-            Unit closestUnit = null;
+            Unit selectedUnit = null;
             float closestDistanceSqr = float.MaxValue;
 
             foreach (Unit unit in units)
             {
+                Debug.Log($"🔍 Analizando unidad {unit.name}, estado: {unit.CurrentState}, posición: {unit.transform.position}");
+                Debug.Log($"🧠 Buscando enemigos... Total encontrados: {(isPlayer ? GetAllPlayerUnits().ToList().Count : m_Enemies.Count)}");
+
                 if (unit.CurrentState == UnitState.Dead) continue;
 
                 float sqrDistance = (unit.transform.position - originPosition).sqrMagnitude;
-                if (sqrDistance < closestDistanceSqr)
+
+                bool isBetterCandidate = false;
+
+                if (unit.CurrentAttackers == 0)
                 {
-                    closestUnit = unit;
+                    isBetterCandidate = true;
+                }
+                else if (selectedUnit != null && selectedUnit.CurrentAttackers > 0 && sqrDistance < closestDistanceSqr)
+                {
+                    isBetterCandidate = true;
+                }
+
+                if (isBetterCandidate)
+                {
+                    selectedUnit = unit;
                     closestDistanceSqr = sqrDistance;
                 }
             }
 
-            return closestUnit;
+            return selectedUnit;
         }
-        
+
+
         public IEnumerable<Unit> GetAllPlayerUnits()
         {
             return m_PlayerUnits;

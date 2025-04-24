@@ -5,8 +5,7 @@ using UnityEngine.Events;
 
 public class AIPawn : MonoBehaviour
 {
-    [SerializeField]
-    private float m_Speed = 5f;
+    [SerializeField] private float m_Speed = 5f;
 
     [Header("Separation")]
     [SerializeField] private float m_SeparationRadius = 1f;
@@ -26,9 +25,7 @@ public class AIPawn : MonoBehaviour
 
     void Start()
     {
-        _mGameGameManager = FindObjectOfType<GameManager>() ?? (BaseGameManager)FindObjectOfType<BattleGameManager>();
-        m_TilemapManager = TilemapManager.Get();
-        m_Unit = GetComponent<Unit>();
+        InitializeComponents();
     }
 
     void Update()
@@ -39,76 +36,89 @@ public class AIPawn : MonoBehaviour
             return;
         }
 
-        Vector3 separationVector = m_ApplySeparation ? CalculateSeparation() : Vector3.zero;
         Vector3 targetPosition = m_CurrentPath[m_CurrentNodeIndex];
+        Vector3 combinedDirection = GetCombinedDirection(targetPosition);
+        MoveAlongPath(combinedDirection);
+        HandleNodeArrival(targetPosition);
+    }
+
+    private void InitializeComponents()
+    {
+        _mGameGameManager = FindObjectOfType<GameManager>() ?? (BaseGameManager)FindObjectOfType<BattleGameManager>();
+        m_TilemapManager = TilemapManager.Get();
+        m_Unit = GetComponent<Unit>();
+    }
+
+    private Vector3 GetCombinedDirection(Vector3 targetPosition)
+    {
         Vector3 direction = (targetPosition - transform.position).normalized;
         float distanceToTarget = Vector3.Distance(transform.position, targetPosition);
 
-        // 🔁 Peso dinámico: reduce separación si está cerca del objetivo
+        Vector3 separationVector = m_ApplySeparation ? CalculateSeparation() : Vector3.zero;
         float separationWeight = Mathf.Clamp01(distanceToTarget / 1.5f);
         Vector3 combinedDirection = direction + separationVector * separationWeight;
 
-        // 🚨 EMPUJE si está atrapado con muchas unidades encima
-        var overlaps = Physics2D.OverlapCircleAll(transform.position, 0.3f);
-        if (overlaps.Length > 3)
-        {
-            Vector3 pushVector = Vector3.zero;
+        ApplyPushback(ref combinedDirection);
 
-            foreach (var col in overlaps)
-            {
-                if (col.gameObject == gameObject) continue;
-                Vector3 away = transform.position - col.transform.position;
-                if (away.sqrMagnitude > 0.001f)
-                {
-                    pushVector += away.normalized / away.magnitude;
-                }
-            }
-
-            if (pushVector != Vector3.zero)
-            {
-                Vector3 normalizedPush = pushVector.normalized;
-
-                // Esta unidad se impulsa a sí misma
-                combinedDirection += normalizedPush * 0.2f;
-
-                // Empujar a los demás suavemente
-                foreach (var col in overlaps)
-                {
-                    if (col.gameObject == gameObject) continue;
-
-                    AIPawn otherPawn = col.GetComponent<AIPawn>();
-                    if (otherPawn != null)
-                    {
-                        Vector3 away = col.transform.position - transform.position;
-                        if (away.sqrMagnitude > 0.01f)
-                        {
-                            Vector3 pushDir = away.normalized * 0.05f; // fuerza más sutil
-                            otherPawn.ApplyExternalPush(pushDir);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Normalizar si es necesario
         if (combinedDirection.magnitude > 1f)
         {
             combinedDirection.Normalize();
         }
 
-        // Movimiento normal
-        transform.position += combinedDirection * m_Speed * Time.deltaTime;
+        return combinedDirection;
+    }
 
-        // Movimiento externo acumulado (empuje mutuo)
+    private void ApplyPushback(ref Vector3 combinedDirection)
+    {
+        var overlaps = Physics2D.OverlapCircleAll(transform.position, 0.3f);
+        if (overlaps.Length <= 3) return;
+
+        Vector3 pushVector = Vector3.zero;
+        foreach (var col in overlaps)
+        {
+            if (col.gameObject == gameObject) continue;
+            Vector3 away = transform.position - col.transform.position;
+            if (away.sqrMagnitude > 0.001f)
+            {
+                pushVector += away.normalized / away.magnitude;
+            }
+        }
+
+        if (pushVector == Vector3.zero) return;
+
+        Vector3 normalizedPush = pushVector.normalized;
+        combinedDirection += normalizedPush * 0.2f;
+
+        foreach (var col in overlaps)
+        {
+            if (col.gameObject == gameObject) continue;
+
+            AIPawn otherPawn = col.GetComponent<AIPawn>();
+            if (otherPawn != null)
+            {
+                Vector3 away = col.transform.position - transform.position;
+                if (away.sqrMagnitude > 0.01f)
+                {
+                    Vector3 pushDir = away.normalized * 0.05f;
+                    otherPawn.ApplyExternalPush(pushDir);
+                }
+            }
+        }
+    }
+
+    private void MoveAlongPath(Vector3 direction)
+    {
+        transform.position += direction * m_Speed * Time.deltaTime;
+
         if (m_ExternalPushVelocity != Vector3.zero)
         {
             transform.position += m_ExternalPushVelocity * Time.deltaTime;
-
-            // Disipar suavemente el empuje externo
             m_ExternalPushVelocity = Vector3.MoveTowards(m_ExternalPushVelocity, Vector3.zero, 2f * Time.deltaTime);
         }
+    }
 
-        // Llegada al nodo
+    private void HandleNodeArrival(Vector3 targetPosition)
+    {
         if (Vector3.Distance(transform.position, targetPosition) <= 0.15f)
         {
             if (m_CurrentNodeIndex == m_CurrentPath.Count - 1)
@@ -149,11 +159,7 @@ public class AIPawn : MonoBehaviour
 
     protected virtual bool GetPlayerStatus()
     {
-        if (m_Unit != null)
-        {
-            return m_Unit.IsPlayer;
-        }
-
+        if (m_Unit != null) return m_Unit.IsPlayer;
         m_Unit = GetComponent<Unit>();
         return m_Unit.IsPlayer;
     }
@@ -185,12 +191,10 @@ public class AIPawn : MonoBehaviour
         return m_CurrentPath.Count > 0 && m_CurrentNodeIndex < m_CurrentPath.Count;
     }
 
-    // Método para recibir empuje desde otras unidades
     public void ApplyExternalPush(Vector3 pushDirection)
     {
         m_ExternalPushVelocity += pushDirection;
 
-        // Limitar la fuerza acumulada del empuje
         float maxPushMagnitude = 1f;
         if (m_ExternalPushVelocity.magnitude > maxPushMagnitude)
         {

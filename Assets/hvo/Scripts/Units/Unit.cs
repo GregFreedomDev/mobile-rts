@@ -56,6 +56,8 @@ public abstract class Unit : MonoBehaviour
     protected float m_NextAutoAttackTime;
     protected int m_CurrentHealth;
     protected UnitStance m_CurrentStance = UnitStance.Offensive;
+    public int CurrentAttackers { get; set; }
+
     public Vector3Int GridPosition { get; set; } 
 
     public UnitState CurrentState { get; protected set; } = UnitState.Idle;
@@ -113,6 +115,22 @@ public abstract class Unit : MonoBehaviour
             m_AIPawn.OnDestinationReached -= OnDestinationReached;
         }
     }
+    
+    public void BeginBattle()
+    {
+        if (CurrentState == UnitState.Dead || HasTarget) return;
+
+        if (TryFindClosestFoe(out Unit foe))
+        {
+            SetTarget(foe);
+            MoveTo(foe.transform.position);
+        }
+        else
+        {
+            Debug.Log($"{gameObject.name} no encontró enemigo para atacar.");
+        }
+    }
+
 
     public void SetTask(UnitTask task)
     {
@@ -126,13 +144,26 @@ public abstract class Unit : MonoBehaviour
 
     public void SetTarget(Unit target, DestinationSource destinationSource = DestinationSource.CodeTriggered)
     {
+        if (Target != null && Target != target)
+        {
+            // Desasignar objetivo anterior
+            Target.CurrentAttackers = Mathf.Max(0, Target.CurrentAttackers - 1);
+        }
+
+        if (target != null && target != Target)
+        {
+            // Asignar nuevo objetivo
+            target.CurrentAttackers++;
+        }
+
+        Target = target;
+
         if (destinationSource == DestinationSource.PlayerClick)
         {
             OnPlayInteractionSound();
         }
-
-        Target = target;
     }
+
 
     public virtual void SetStance(UnitStanceActionSO stanceActionSO)
     {
@@ -164,7 +195,6 @@ public abstract class Unit : MonoBehaviour
     {
         var direction = (destination - transform.position).normalized;
         m_SpriteRenderer.flipX = direction.x < 0;
-
         m_AIPawn.SetDestination(destination);
         OnSetDestination(source);
     }
@@ -256,7 +286,7 @@ public abstract class Unit : MonoBehaviour
         if (Time.time >= m_NextUnitDetectionTime)
         {
             m_NextUnitDetectionTime = Time.time + m_UnitDetectionCheckRate;
-            foe = MGameGameManager.FindClosestUnit(transform.position, m_ObjectDetectionRadius, !IsPlayer);
+            foe = MGameGameManager.FindClosestUntargetedUnit(transform.position, !IsPlayer);
             return foe != null;
         }
         else
@@ -275,7 +305,11 @@ public abstract class Unit : MonoBehaviour
 
     protected virtual bool TryAttackCurrentTarget()
     {
-        if (Target.CurrentState == UnitState.Dead) return false;
+        if (Target == null || Target.CurrentState == UnitState.Dead)
+        {
+            SetTarget(null); // Esto ya reducirá los atacantes
+            return false;
+        }
 
         if (Time.time >= m_NextAutoAttackTime)
         {
@@ -286,6 +320,7 @@ public abstract class Unit : MonoBehaviour
 
         return false;
     }
+
 
     protected virtual void PerformAttackAnimation(){}
     protected virtual void RunDeadEffect(){}
@@ -299,9 +334,18 @@ public abstract class Unit : MonoBehaviour
             StopMovement();
         }
 
+        // 🔻 Disminuye contador de atacantes si esta unidad era objetivo
+        if (Target != null)
+        {
+            Target.CurrentAttackers = Mathf.Max(0, Target.CurrentAttackers - 1);
+        }
+
+        Target = null;
+
         RunDeadEffect();
         UnregisterUnit();
     }
+
 
 
     private Coroutine m_FlashCoroutine;

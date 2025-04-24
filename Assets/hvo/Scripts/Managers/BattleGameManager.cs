@@ -54,12 +54,30 @@ namespace hvo.Scripts.Managers
 
         private void StartBattle()
         {
-            if(m_PlayerUnits.Count > 0 && !m_IsBattleStarted && m_Enemies.Count > 0)
+            if (m_PlayerUnits.Count > 0 && !m_IsBattleStarted && m_Enemies.Count > 0)
+            {
                 m_IsBattleStarted = true;
+
+                Debug.Log("⚔️ ¡Batalla iniciada!");
+
+                foreach (Unit unit in m_PlayerUnits)
+                {
+                    unit.BeginBattle();
+                }
+
+                foreach (Unit unit in m_Enemies)
+                {
+                    unit.BeginBattle();
+                }
+            }
             else
-                m_IsBattleStarted = false;
+            {
+                Debug.LogWarning("No se pudo iniciar la batalla. Verifica que haya unidades de ambos lados.");
+            }
         }
 
+        
+        
         private void GenerateBattleGrid()
         {
             m_BattleGrid.GenerateGrid();

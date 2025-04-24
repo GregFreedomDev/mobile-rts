@@ -47,6 +47,15 @@ namespace hvo.Scripts.Utils
                     return true;
             }
         }
+        
+        public Vector3 ClampToBounds(Vector3 worldPosition)
+        {
+            Vector3Int cellPos = m_Tilemap.WorldToCell(worldPosition);
+            cellPos.x = Mathf.Clamp(cellPos.x, 0, m_Width - 1);
+            cellPos.y = Mathf.Clamp(cellPos.y, 0, m_Height - 1);
+            return m_Tilemap.GetCellCenterWorld(cellPos);
+        }
+
 
         public void RegisterUnit(Vector3Int cellPos, Unit unit)
         {
