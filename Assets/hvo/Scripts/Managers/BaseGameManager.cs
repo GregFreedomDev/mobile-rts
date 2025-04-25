@@ -31,36 +31,24 @@ namespace hvo.Scripts.Managers
             m_GameOverLayout.OnContinueClicked += ContinueNextLevel;
         }
 
-        //update this method, actualmente estan eligiendo siempre el mas cercano. Pero deberia elegir el mas cercano que no está siendo atacado. Hay que pensarlo bien,
-        //a veces conviene que vaya a atacar a los que están mas atras y que no
-        //no tienen atacante asignado
+        //Si llevo un rato intentando llegar y no puedo, entonces seleccionar
+        //un enemigo más cercano incluso si ya tiene atancates
         public Unit FindClosestUntargetedUnit(Vector3 originPosition, bool isPlayer)
         {
-            IEnumerable<Unit> units = isPlayer ? GetAllPlayerUnits() : m_Enemies;
+            IEnumerable<Unit> units = isPlayer ? GetAllPlayerUnits() : GetAllEnemiesUnits();
             Unit selectedUnit = null;
             float closestDistanceSqr = float.MaxValue;
 
             foreach (Unit unit in units)
             {
-                Debug.Log($"🔍 Analizando unidad {unit.name}, estado: {unit.CurrentState}, posición: {unit.transform.position}");
-                Debug.Log($"🧠 Buscando enemigos... Total encontrados: {(isPlayer ? GetAllPlayerUnits().ToList().Count : m_Enemies.Count)}");
-
                 if (unit.CurrentState == UnitState.Dead) continue;
 
                 float sqrDistance = (unit.transform.position - originPosition).sqrMagnitude;
 
-                bool isBetterCandidate = false;
-
-                if (unit.CurrentAttackers == 0)
-                {
-                    isBetterCandidate = true;
-                }
-                else if (selectedUnit != null && selectedUnit.CurrentAttackers > 0 && sqrDistance < closestDistanceSqr)
-                {
-                    isBetterCandidate = true;
-                }
-
-                if (isBetterCandidate)
+                // Siempre elegimos el más cercano, con preferencia por los que tienen menos atacantes
+                if (selectedUnit == null ||
+                    unit.CurrentAttackers < selectedUnit.CurrentAttackers ||
+                    (unit.CurrentAttackers == selectedUnit.CurrentAttackers && sqrDistance < closestDistanceSqr))
                 {
                     selectedUnit = unit;
                     closestDistanceSqr = sqrDistance;
@@ -69,21 +57,20 @@ namespace hvo.Scripts.Managers
 
             return selectedUnit;
         }
-
-
+        
         public IEnumerable<Unit> GetAllPlayerUnits()
         {
-            return m_PlayerUnits;
+            return m_PlayerUnits.Where(it => it != null);
         }
         
         public IEnumerable<Unit> GetAllEnemiesUnits()
         {
-            return m_Enemies;
+            return m_Enemies.Where(it => it != null);;
         }
 
         public IEnumerable<Unit> GetAllUnits()
         {
-            return m_PlayerUnits.Concat(m_Enemies);
+            return m_PlayerUnits.Concat(m_Enemies).Where(it => it != null);
         }
         
         public List<Unit> GetFriendlyUnits(bool isPlayer)

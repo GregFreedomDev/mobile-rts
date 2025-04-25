@@ -22,8 +22,8 @@ namespace hvo.Scripts.Units
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if(battleGameManager == null || battleGameManager.IsBattleStarted) return;
-            
+            if (battleGameManager == null || battleGameManager.IsBattleStarted) return;
+
             originalWorldPos = transform.position;
             originalGridPos = unit.GridPosition;
 
@@ -51,6 +51,20 @@ namespace hvo.Scripts.Units
 
             Vector3 worldPos = mainCam.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0;
+
+            // Revisa si el mouse está sobre el panel UI para eliminar
+            if (IsOverUIPanel())
+            {
+                battleGameManager.BattleGrid.RegisterUnit(originalGridPos, null); // Limpia la celda
+                RenderSorter sorter = FindObjectOfType<RenderSorter>();
+                if (sorter != null && sorter.Units.Contains(unit))
+                {
+                    sorter.Units.Remove(unit);
+                }
+                Destroy(gameObject); // Elimina la unidad
+                return;
+            }
+
             Vector3Int newGridPos = battleGameManager.BattleGrid.Tilemap.WorldToCell(worldPos);
 
             if (battleGameManager.BattleGrid.CanPlaceUnit(newGridPos, unit))
@@ -68,6 +82,17 @@ namespace hvo.Scripts.Units
                 // Revertir posición si no es válida
                 transform.position = originalWorldPos;
             }
+        }
+
+        private bool IsOverUIPanel()
+        {
+            GameObject panel = GameObject.Find("Panel(Clone)");
+            if (panel == null) return false;
+
+            RectTransform panelRect = panel.GetComponent<RectTransform>();
+            Canvas canvas = panel.GetComponentInParent<Canvas>();
+
+            return RectTransformUtility.RectangleContainsScreenPoint(panelRect, Input.mousePosition, canvas.worldCamera);
         }
     }
 }

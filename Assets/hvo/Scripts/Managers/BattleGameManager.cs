@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using hvo.Scripts.Utils;
 using HvO.UI;
 using UnityEngine;
@@ -41,6 +42,7 @@ namespace hvo.Scripts.Managers
             m_BattleGrid = new BattleGrid(m_Width, m_Height, m_floorTile, m_Tilemap);
             GenerateBattleGrid();
             m_ButtonPrefab.onClick.AddListener(StartBattle);
+            SpawnUnitsInArena();
         }
 
         protected void ResetStartBattle()
@@ -54,18 +56,18 @@ namespace hvo.Scripts.Managers
 
         private void StartBattle()
         {
-            if (m_PlayerUnits.Count > 0 && !m_IsBattleStarted && m_Enemies.Count > 0)
+            if (GetAllPlayerUnits().ToList().Count > 0 && !m_IsBattleStarted && GetAllEnemiesUnits().ToList().Count > 0)
             {
                 m_IsBattleStarted = true;
 
                 Debug.Log("⚔️ ¡Batalla iniciada!");
 
-                foreach (Unit unit in m_PlayerUnits)
+                foreach (Unit unit in GetAllPlayerUnits().ToList())
                 {
                     unit.BeginBattle();
                 }
 
-                foreach (Unit unit in m_Enemies)
+                foreach (Unit unit in GetAllEnemiesUnits().ToList())
                 {
                     unit.BeginBattle();
                 }
@@ -75,6 +77,49 @@ namespace hvo.Scripts.Managers
                 Debug.LogWarning("No se pudo iniciar la batalla. Verifica que haya unidades de ambos lados.");
             }
         }
+        
+        
+        public void SpawnUnitsInArena(int warriorsPerRow = 2, int goblinsPerRow = 2)
+        {
+            if (BattleGrid == null)
+            {
+                Debug.LogWarning("BattleGrid no está inicializado.");
+                return;
+            }
+
+            var tilemap = BattleGrid.Tilemap;
+            var width = 14; // o BattleGrid.Width si está expuesto
+            var height = 5;  // o BattleGrid.Height si está expuesto
+
+            GameObject warriorPrefab = Resources.Load<GameObject>("Prefabs/Units/Warrior");
+            GameObject goblinPrefab = Resources.Load<GameObject>("Prefabs/Units/Goblin");
+
+            if (warriorPrefab == null || goblinPrefab == null)
+            {
+                Debug.LogError("No se encontraron los prefabs Warrior o Goblin en Resources.");
+                return;
+            }
+
+            for (int y = 0; y < height; y++)
+            {
+                // Spawn Warriors en el lado izquierdo (columnas 0–6)
+                for (int x = 0; x < warriorsPerRow; x++)
+                {
+                    Vector3Int cell = new Vector3Int(x, y, 0);
+                    Vector3 worldPos = tilemap.GetCellCenterWorld(cell);
+                    GameObject warrior = Instantiate(warriorPrefab, worldPos, Quaternion.identity);
+                }
+
+                // Spawn Goblins en el lado derecho (columnas 7–13)
+                for (int x = 0; x < goblinsPerRow; x++)
+                {
+                    Vector3Int cell = new Vector3Int(width - 1 - x, y, 0);
+                    Vector3 worldPos = tilemap.GetCellCenterWorld(cell);
+                    GameObject goblin = Instantiate(goblinPrefab, worldPos, Quaternion.identity);
+                }
+            }
+        }
+
 
         
         

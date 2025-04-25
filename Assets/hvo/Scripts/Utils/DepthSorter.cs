@@ -11,6 +11,8 @@ public class RenderSorter : MonoBehaviour
 
     private List<Unit> allUnits = new();
     private BattleGameManager battleGameManager;
+    public List<Unit> Units => allUnits;
+
     private void Start()
     {
         battleGameManager = BaseGameManager.Get() as BattleGameManager;

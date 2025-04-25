@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using hvo.Scripts.Managers;
+using hvo.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -17,6 +18,7 @@ public class AIPawn : MonoBehaviour
     private TilemapManager m_TilemapManager;
     private int m_CurrentNodeIndex;
     private BaseGameManager _mGameGameManager;
+    private BattleGrid _battleGrid;
     private Unit m_Unit;
     private Vector3 m_ExternalPushVelocity;
 
@@ -46,6 +48,7 @@ public class AIPawn : MonoBehaviour
     {
         _mGameGameManager = FindObjectOfType<GameManager>() ?? (BaseGameManager)FindObjectOfType<BattleGameManager>();
         m_TilemapManager = TilemapManager.Get();
+        _battleGrid = (_mGameGameManager as BattleGameManager)?.BattleGrid;
         m_Unit = GetComponent<Unit>();
     }
 
@@ -108,13 +111,16 @@ public class AIPawn : MonoBehaviour
 
     private void MoveAlongPath(Vector3 direction)
     {
-        transform.position += direction * m_Speed * Time.deltaTime;
+        Vector3 newPosition = transform.position + direction * m_Speed * Time.deltaTime;
 
         if (m_ExternalPushVelocity != Vector3.zero)
         {
-            transform.position += m_ExternalPushVelocity * Time.deltaTime;
+            newPosition += m_ExternalPushVelocity * Time.deltaTime;
             m_ExternalPushVelocity = Vector3.MoveTowards(m_ExternalPushVelocity, Vector3.zero, 2f * Time.deltaTime);
         }
+
+        // No clamping aquí para no romper el pathfinding
+        transform.position = newPosition;
     }
 
     private void HandleNodeArrival(Vector3 targetPosition)
@@ -136,6 +142,11 @@ public class AIPawn : MonoBehaviour
 
     public void SetDestination(Vector3 destination)
     {
+        if (_battleGrid != null)
+        {
+            destination = _battleGrid.ClampToBounds(destination);
+        }
+
         if (m_CurrentDestination.HasValue && Vector3.Distance(m_CurrentDestination.Value, destination) < 0.1f)
         {
             return;
@@ -200,5 +211,11 @@ public class AIPawn : MonoBehaviour
         {
             m_ExternalPushVelocity = m_ExternalPushVelocity.normalized * maxPushMagnitude;
         }
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.up * 0.5f);
     }
 }
