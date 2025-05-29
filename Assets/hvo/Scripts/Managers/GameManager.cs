@@ -58,6 +58,7 @@ public class GameManager : BaseGameManager
 
     void Start()
     {
+        base.Awake();
         Time.timeScale = 1;
         m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
         ClearActionBarUI();

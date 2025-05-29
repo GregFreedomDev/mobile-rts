@@ -36,13 +36,13 @@ namespace hvo.Scripts.Managers
 
         private void Start()
         {
-            base.Start();
+            base.Awake();
             base.AddResources(500,500);
             InitializePanelUnitUI();
             m_BattleGrid = new BattleGrid(m_Width, m_Height, m_floorTile, m_Tilemap);
             GenerateBattleGrid();
             m_ButtonPrefab.onClick.AddListener(StartBattle);
-            SpawnUnitsInArena();
+            //SpawnUnitsInArena();
         }
 
         protected void ResetStartBattle()

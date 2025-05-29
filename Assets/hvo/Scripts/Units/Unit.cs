@@ -25,6 +25,15 @@ public enum UnitType
     Warrior, Archer, Goblin, Demolisher
 }
 
+public enum StatType
+{
+    Agility,      // Evasion, reaction speed, dodge
+    Strength,     // Physical melee damage (for melee units)
+    MagicPower,   // Magic damage and effectiveness (for magic units)
+    Defense,      // Reduces physical/magic damage taken
+    Speed         // Frequency of turns/attacks
+}
+
 public abstract class Unit : MonoBehaviour
 {
     [SerializeField] private bool m_IsKingUnit = false;

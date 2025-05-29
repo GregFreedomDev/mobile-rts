@@ -20,12 +20,16 @@ namespace hvo.Scripts.Managers
         protected int m_Gold = 0;
         protected int m_Wood = 0;
         protected GameState m_GameState = GameState.Playing;
+        protected Player m_Player;
+        public Player Player => m_Player;
+
 
         public int Gold => m_Gold;
         public int Wood => m_Wood;
 
-        public void Start()
+        public void Awake()
         {
+            m_Player = new Player("Player1");
             m_GameOverLayout.OnBackClicked += GoToVillage;
             m_GameOverLayout.OnRetryClicked += GoToBattle;
             m_GameOverLayout.OnContinueClicked += ContinueNextLevel;
