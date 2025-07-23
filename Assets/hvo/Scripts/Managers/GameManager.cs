@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -29,6 +30,7 @@ public class GameManager : BaseGameManager
     [SerializeField] private TextPopupController m_TextPopupController;
     [SerializeField] private ResourceDataUI m_ResourceDataUI;
     [SerializeField] private Button m_buttonBattle;
+    [SerializeField] private FoodPanel m_FoodPanel;
 
     [Header("Camera Settings")]
     [SerializeField] private float m_PanSpeed = 100;
@@ -540,41 +542,62 @@ public class GameManager : BaseGameManager
         m_ActionBar.Hide();
     }
 
-    void ConfirmBuildPlacement()
+void ConfirmBuildPlacement()
+{
+    if (((WorkerUnit)ActiveUnit).CurrentState == UnitState.Minig)
     {
-        if (((WorkerUnit)ActiveUnit).CurrentState == UnitState.Minig)
-        {
-            Debug.Log("Worker is minning!");
-            return;
-        }
-
-        if (!TryDeductResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost))
-        {
-            Debug.Log("Not Enough Resources!");
-            return;
-        }
-
-        if (m_PlacementProcess.TryFinalizePlacement(out Vector3 buildPosition))
-        {
-            DisplayClickEffect(buildPosition, ClickType.Build);
-            AudioManager.Get().PlaySound(m_PlacementAudioSettings, buildPosition);
-            m_BuildConfirmationBar.Hide();
-
-            new BuildingProcess(
-                m_PlacementProcess.BuildAction,
-                buildPosition,
-                (WorkerUnit)ActiveUnit,
-                m_ConstructionEffectPrefab
-            );
-
-            m_PlacementProcess = null;
-            m_CameraController.LockCamera = false;
-        }
-        else
-        {
-            AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost);
-        }
+        Debug.Log("Worker is minning!");
+        return;
     }
+
+    if (!TryDeductResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost))
+    {
+        Debug.Log("Not Enough Resources!");
+        return;
+    }
+
+    if (m_PlacementProcess.TryFinalizePlacement(out Vector3 buildPosition))
+    {
+        // 👇 Aquí empieza la nueva integración con hora real
+        StartCoroutine(TimeAPIHelper.Instance.GetServerTime(
+            (serverTime) =>
+            {
+                float constructionDuration = m_PlacementProcess.BuildAction.ConstructionTime;
+                DateTime finishTime = serverTime.AddSeconds(constructionDuration);
+
+                Debug.Log($"[BUILD] Construcción terminará a: {finishTime} UTC");
+
+                // Iniciar tu proceso de construcción con la hora confiable
+                var buildingProcess = new BuildingProcess(
+                    m_PlacementProcess.BuildAction,
+                    buildPosition,
+                    (WorkerUnit)ActiveUnit,
+                    m_ConstructionEffectPrefab
+                );
+
+                buildingProcess.SetFinishTime(finishTime); // 💥 Necesitas agregar este método (te lo explico abajo)
+
+                DisplayClickEffect(buildPosition, ClickType.Build);
+                AudioManager.Get().PlaySound(m_PlacementAudioSettings, buildPosition);
+                m_BuildConfirmationBar.Hide();
+
+                m_PlacementProcess = null;
+                m_CameraController.LockCamera = false;
+            },
+            (error) =>
+            {
+                Debug.LogError("Error al obtener hora del servidor: " + error);
+                // Si falla, podrías revertir recursos o dar mensaje
+                AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost);
+            }
+        ));
+    }
+    else
+    {
+        AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost);
+    }
+}
+
 
     void CancelBuildPlacement()
     {
@@ -610,5 +633,16 @@ public class GameManager : BaseGameManager
         //     GUI.Label(new Rect(20, 160, 200, 20), "Task: " + ActiveUnit.CurrentTask.ToString(), new GUIStyle { fontSize = 30 });
         //     GUI.Label(new Rect(20, 200, 200, 20), "Stance: " + ActiveUnit.CurrentStance.ToString(), new GUIStyle { fontSize = 30 });
         // }
+    }
+
+    void CloseFoodPanel()
+    {
+        m_FoodPanel.Hide();
+    }
+
+    public void StartCookProcess(CookFoodActionSO cookFoodActionSo)
+    {
+        m_FoodPanel.Show();
+        m_FoodPanel.SetupHooks(CloseFoodPanel);
     }
 }

@@ -270,6 +270,7 @@ MonoBehaviour:
   m_IsKingUnit: 0
   m_Actions:
   - {fileID: 11400000, guid: 7e1c06040b4604e089737a6fbd38f5ff, type: 2}
+  - {fileID: 11400000, guid: 9e13609202ce744a6bf3f00a83dd510c, type: 2}
   m_ObjectDetectionRadius: 1
   m_UnitDetectionCheckRate: 0.5
   m_AttackRange: 0.8

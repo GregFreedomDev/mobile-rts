@@ -16,6 +16,8 @@ public class BuildActionSO: ActionSO
     [SerializeField] private int m_GoldCost;
     [SerializeField] private int m_WoodCost;
 
+    [SerializeField] private Sprite m_MidConstructionSprite;
+    public Sprite MidConstructionSprite => m_MidConstructionSprite;
     public StructureUnit StructurePrefab => m_StructurePrefab;
     public float ConstructionTime => m_ConstructionTime;
     public Sprite PlacementSprite => m_PlacementSprite;

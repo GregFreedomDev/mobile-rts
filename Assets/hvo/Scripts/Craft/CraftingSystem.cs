@@ -5,7 +5,7 @@ public class CraftingSystem : MonoBehaviour
 {
     public List<Recipe> recipes = new List<Recipe>();
 
-    void Start()
+    void Awake()
     {
         recipes.Add(new Recipe(ItemType.Bread, new List<IngredientType> { IngredientType.Flour }, EffectType.RestoreSmallHP));
         recipes.Add(new Recipe(ItemType.BerryCake, new List<IngredientType> { IngredientType.Flour, IngredientType.Egg, IngredientType.Berry }, EffectType.RestoreHP));
