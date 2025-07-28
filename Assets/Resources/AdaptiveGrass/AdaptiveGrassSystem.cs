@@ -15,9 +15,7 @@ public static class DeviceTierDetector
         int height = Screen.height;
         int ram = SystemInfo.systemMemorySize; // in MB
         string gpu = SystemInfo.graphicsDeviceName.ToLower();
-
-        return DeviceTier.Low;
-
+            
         if ((width < 900 || height < 600) || ram < 3000 || gpu.Contains("intel"))
             return DeviceTier.Low;
         else if ((width < 1600 || height < 1200) || ram < 6000)
