@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 400950084207b4c009df490d14c19809
+guid: 33709f96001c24c4f8872a7791500eae
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4588039602071169682
-    second: grass_64_0
+      213: 545553573957724120
+    second: RTS_New_HomeOff_64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: grass_64_0
+      name: RTS_New_HomeOff_64_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 2
         width: 64
-        height: 64
+        height: 68
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e659f175a420450c0800000000000000
-      internalID: -4588039602071169682
+      spriteID: 8d7e1b5c512329700800000000000000
+      internalID: 545553573957724120
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      grass_64_0: -4588039602071169682
+      RTS_New_HomeOff_64_0: 545553573957724120
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

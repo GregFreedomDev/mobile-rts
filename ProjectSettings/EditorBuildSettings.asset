@@ -5,16 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/hvo/Scenes/MenuScene.unity
     guid: e489d966059934879a057d574e9900cf
-  - enabled: 0
+  - enabled: 1
     path: Assets/hvo/Scenes/PlayScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 0
+  - enabled: 1
     path: Assets/hvo/Scenes/BattleScene.unity
     guid: b31bf81b6fd214222a7b1a301ea3da45
-  - enabled: 1
+  - enabled: 0
     path: Assets/hvo/Scenes/TestResolution.unity
     guid: 9f72d3332f8264a4e9579b25361073f3
   m_configObjects:
