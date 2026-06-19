@@ -50,7 +50,7 @@ public class GameManager : BaseGameManager
 
     public Unit ActiveUnit;
 
-    private GameState m_GameState = GameState.Playing;
+
     private Tree[] m_Trees = new Tree[0];
     private CameraController m_CameraController;
     private PlacementProcess m_PlacementProcess;
