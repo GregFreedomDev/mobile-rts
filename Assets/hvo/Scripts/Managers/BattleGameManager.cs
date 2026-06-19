@@ -16,7 +16,7 @@ namespace hvo.Scripts.Managers
         [SerializeField] private UnitElementBar m_UnitElementPrefab;
         [SerializeField] private TileBase m_FloorTile;
         [SerializeField] private Tilemap m_Tilemap;
-        [SerializeField] private Button m_StartBattleButton;
+        [SerializeField] private Button m_StartBattleButton; // Assign in Inspector (was "m_ButtonPrefab")
         [SerializeField] private TextPopupController m_TextPopupController;
         [SerializeField] private BattleTimer m_BattleTimer;
         [SerializeField] private EnemyFormationSO m_EnemyFormation;
@@ -47,7 +47,10 @@ namespace hvo.Scripts.Managers
             InitializePanelUnitUI();
             SpawnEnemyFormation();
 
-            m_StartBattleButton.onClick.AddListener(StartBattle);
+            if (m_StartBattleButton != null)
+                m_StartBattleButton.onClick.AddListener(StartBattle);
+            else
+                Debug.LogWarning("[BattleGameManager] m_StartBattleButton not assigned in Inspector.");
 
             if (m_BattleTimer != null)
                 m_BattleTimer.OnTimerExpired += OnTimeUp;
@@ -83,7 +86,7 @@ namespace hvo.Scripts.Managers
 
             if (m_BattleTimer != null) m_BattleTimer.StartTimer();
 
-            m_StartBattleButton.interactable = false;
+            if (m_StartBattleButton != null) m_StartBattleButton.interactable = false;
         }
 
         private void OnTimeUp()
