@@ -16,7 +16,7 @@ namespace hvo.Scripts.Managers
         [SerializeField] private UnitElementBar m_UnitElementPrefab;
         [SerializeField] private TileBase m_FloorTile;
         [SerializeField] private Tilemap m_Tilemap;
-        [SerializeField] private Button m_StartBattleButton; // Assign in Inspector (was "m_ButtonPrefab")
+        [SerializeField] private Button m_ButtonPrefab;
         [SerializeField] private TextPopupController m_TextPopupController;
         [SerializeField] private BattleTimer m_BattleTimer;
         [SerializeField] private EnemyFormationSO m_EnemyFormation;
@@ -47,10 +47,10 @@ namespace hvo.Scripts.Managers
             InitializePanelUnitUI();
             SpawnEnemyFormation();
 
-            if (m_StartBattleButton != null)
-                m_StartBattleButton.onClick.AddListener(StartBattle);
+            if (m_ButtonPrefab != null)
+                m_ButtonPrefab.onClick.AddListener(StartBattle);
             else
-                Debug.LogWarning("[BattleGameManager] m_StartBattleButton not assigned in Inspector.");
+                Debug.LogWarning("[BattleGameManager] m_ButtonPrefab not assigned in Inspector.");
 
             if (m_BattleTimer != null)
                 m_BattleTimer.OnTimerExpired += OnTimeUp;
@@ -59,15 +59,12 @@ namespace hvo.Scripts.Managers
         private void Update()
         {
             if (!m_IsBattleStarted) return;
+            if (m_InitialEnemyUnitCount == 0 || m_InitialPlayerUnitCount == 0) return;
 
             if (!GetAllEnemiesUnits().Any())
-            {
                 EndBattle(true);
-            }
             else if (!GetAllPlayerUnits().Any())
-            {
                 EndBattle(false);
-            }
         }
 
         private void StartBattle()
@@ -86,7 +83,7 @@ namespace hvo.Scripts.Managers
 
             if (m_BattleTimer != null) m_BattleTimer.StartTimer();
 
-            if (m_StartBattleButton != null) m_StartBattleButton.interactable = false;
+            if (m_ButtonPrefab != null) m_ButtonPrefab.interactable = false;
         }
 
         private void OnTimeUp()
