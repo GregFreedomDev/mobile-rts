@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -89,12 +88,12 @@ namespace hvo.Scripts.Managers
         }
         
         
-        public void HandleGameOver(bool isVictory)
+        public void HandleGameOver(bool isVictory, int stars = 3)
         {
             if (isVictory)
             {
                 AudioManager.Get().PlayMusic(m_WinAudioSettings);
-                m_GameOverLayout.ShowVictory(m_Gold, 3, new List<Reward> {new Reward("Gold", 100), new Reward("Exp", 100)}, 5);
+                m_GameOverLayout.ShowVictory(m_Gold, stars, new List<Reward> { new Reward("Gold", 100), new Reward("Exp", 100) }, 5);
             }
             else
             {
@@ -108,20 +107,16 @@ namespace hvo.Scripts.Managers
         
         void GoToVillage()
         {
-            Debug.Log("GoToVillage");
             SceneManager.LoadScene("PlayScene");
         }
 
         void ContinueNextLevel()
         {
-            Debug.Log("ContinueNextLevel");
-
+            SceneManager.LoadScene("BattleScene");
         }
-        
-        
+
         protected virtual void GoToBattle()
         {
-            Debug.Log("Battle Scene");
             SceneManager.LoadScene("BattleScene");
         }
 

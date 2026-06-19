@@ -134,9 +134,6 @@ public abstract class Unit : MonoBehaviour
             SetTarget(foe);
             MoveTo(foe.transform.position);
         }
-        else
-        {
-            Debug.Log($"{gameObject.name} no encontró enemigo para atacar.");
         }
     }
 

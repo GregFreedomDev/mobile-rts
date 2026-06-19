@@ -6,93 +6,96 @@ namespace hvo.Scripts.Units
 {
     public class UnitDragger : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        private Camera mainCam;
-        private Vector3Int originalGridPos;
-        private Vector3 originalWorldPos;
-        private BattleGameManager battleGameManager;
-        private Unit unit;
-        private GameObject preview;
+        [SerializeField] private RectTransform m_UnitPanelRect;
+
+        private Camera m_MainCam;
+        private Vector3Int m_OriginalGridPos;
+        private Vector3 m_OriginalWorldPos;
+        private BattleGameManager m_BattleManager;
+        private Unit m_Unit;
+        private GameObject m_Preview;
 
         void Start()
         {
-            mainCam = Camera.main;
-            battleGameManager = BaseGameManager.Get() as BattleGameManager;
-            unit = GetComponent<Unit>();
+            m_MainCam = Camera.main;
+            m_BattleManager = BaseGameManager.Get() as BattleGameManager;
+            m_Unit = GetComponent<Unit>();
         }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (battleGameManager == null || battleGameManager.IsBattleStarted) return;
+            if (m_BattleManager == null || m_BattleManager.IsBattleStarted) return;
 
-            originalWorldPos = transform.position;
-            originalGridPos = unit.GridPosition;
+            m_OriginalWorldPos = transform.position;
+            m_OriginalGridPos = m_Unit.GridPosition;
 
-            // Crear vista previa transparente
-            preview = new GameObject("UnitDragPreview");
-            var spriteRenderer = preview.AddComponent<SpriteRenderer>();
-            var unitSprite = GetComponent<SpriteRenderer>();
-
-            spriteRenderer.sprite = unitSprite.sprite;
-            spriteRenderer.color = new Color(1f, 1f, 1f, 0.5f);
-            spriteRenderer.sortingOrder = 100;
+            m_Preview = new GameObject("UnitDragPreview");
+            SpriteRenderer sr = m_Preview.AddComponent<SpriteRenderer>();
+            SpriteRenderer unitSr = GetComponent<SpriteRenderer>();
+            sr.sprite = unitSr.sprite;
+            sr.color = new Color(1f, 1f, 1f, 0.5f);
+            sr.sortingOrder = 100;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (preview == null) return;
-            Vector3 worldPos = mainCam.ScreenToWorldPoint(Input.mousePosition);
+            if (m_Preview == null) return;
+
+            Vector3 worldPos = m_MainCam.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0;
-            preview.transform.position = worldPos;
+            m_Preview.transform.position = worldPos;
+
+            Vector3Int cellPos = m_BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
+            m_BattleManager.BattleGrid.HighlightCell(cellPos, m_Unit.IsPlayer);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
-            if (preview != null) Destroy(preview);
+            if (m_Preview != null)
+            {
+                Destroy(m_Preview);
+                m_Preview = null;
+            }
 
-            Vector3 worldPos = mainCam.ScreenToWorldPoint(Input.mousePosition);
+            m_BattleManager.BattleGrid.ClearHighlight();
+
+            Vector3 worldPos = m_MainCam.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0;
 
-            // Revisa si el mouse está sobre el panel UI para eliminar
-            if (IsOverUIPanel())
+            if (IsOverPanel(eventData))
             {
-                battleGameManager.BattleGrid.RegisterUnit(originalGridPos, null); // Limpia la celda
-                RenderSorter sorter = FindObjectOfType<RenderSorter>();
-                if (sorter != null && sorter.Units.Contains(unit))
-                {
-                    sorter.Units.Remove(unit);
-                }
-                Destroy(gameObject); // Elimina la unidad
+                m_BattleManager.BattleGrid.RegisterUnit(m_OriginalGridPos, null);
+                Destroy(gameObject);
                 return;
             }
 
-            Vector3Int newGridPos = battleGameManager.BattleGrid.Tilemap.WorldToCell(worldPos);
+            Vector3Int newGridPos = m_BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
 
-            if (battleGameManager.BattleGrid.CanPlaceUnit(newGridPos, unit))
+            if (m_BattleManager.BattleGrid.CanPlaceUnit(newGridPos, m_Unit))
             {
-                // Actualiza la grilla
-                battleGameManager.BattleGrid.RegisterUnit(originalGridPos, null);
-                battleGameManager.BattleGrid.RegisterUnit(newGridPos, unit);
-
-                // Mueve la unidad
-                transform.position = battleGameManager.BattleGrid.Tilemap.GetCellCenterWorld(newGridPos);
-                unit.GridPosition = newGridPos;
+                m_BattleManager.BattleGrid.RegisterUnit(m_OriginalGridPos, null);
+                m_BattleManager.BattleGrid.RegisterUnit(newGridPos, m_Unit);
+                transform.position = m_BattleManager.BattleGrid.Tilemap.GetCellCenterWorld(newGridPos);
+                m_Unit.GridPosition = newGridPos;
             }
             else
             {
-                // Revertir posición si no es válida
-                transform.position = originalWorldPos;
+                transform.position = m_OriginalWorldPos;
             }
         }
 
-        private bool IsOverUIPanel()
+        private bool IsOverPanel(PointerEventData eventData)
         {
-            GameObject panel = GameObject.Find("Panel(Clone)");
-            if (panel == null) return false;
+            if (m_UnitPanelRect == null)
+            {
+                // Fallback: check if pointer is over any UI element
+                return eventData.pointerCurrentRaycast.gameObject != null &&
+                       eventData.pointerCurrentRaycast.gameObject.layer == LayerMask.NameToLayer("UI");
+            }
 
-            RectTransform panelRect = panel.GetComponent<RectTransform>();
-            Canvas canvas = panel.GetComponentInParent<Canvas>();
-
-            return RectTransformUtility.RectangleContainsScreenPoint(panelRect, Input.mousePosition, canvas.worldCamera);
+            Canvas canvas = m_UnitPanelRect.GetComponentInParent<Canvas>();
+            return RectTransformUtility.RectangleContainsScreenPoint(
+                m_UnitPanelRect, Input.mousePosition, canvas?.worldCamera);
         }
     }
 }

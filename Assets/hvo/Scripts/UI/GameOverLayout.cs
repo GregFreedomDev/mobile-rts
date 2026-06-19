@@ -33,15 +33,9 @@ public class GameOverLayout : MonoBehaviour
 
     void OnEnable()
     {
-        m_ActionBtn.onClick.AddListener(() =>
-        {
-            OnMainButtonClicked();
-            Debug.Log("Action button clicked");
-        });
+        m_ActionBtn.onClick.AddListener(OnMainButtonClicked);
         m_BackBtn.onClick.AddListener(() => {
             AudioManager.Get().PlayBtnClick();
-            Debug.Log("OnBack");
-
             OnBackClicked.Invoke();
         });
     }
