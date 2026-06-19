@@ -62,6 +62,7 @@ public class GameManager : BaseGameManager
     {
         base.Awake();
         Time.timeScale = 1;
+        m_Resources.OnChanged += RefreshResourceUI; // refresh on any resource change, not just gold/wood
         m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
         ClearActionBarUI();
         AddResources(500, 500);
@@ -595,7 +596,7 @@ void ConfirmBuildPlacement()
 
     public bool TryDeductResources(int goldCost, int woodCost)
     {
-        if (m_Gold >= goldCost && m_Wood >= woodCost)
+        if (Gold >= goldCost && Wood >= woodCost)
         {
             AddResources(-goldCost, -woodCost);
             return true;
@@ -604,10 +605,10 @@ void ConfirmBuildPlacement()
         return false;
     }
 
-    public override void AddResources(int gold, int wood)
+    void RefreshResourceUI()
     {
-        base.AddResources(gold, wood);
-        m_ResourceDataUI.UpdateResourceDisplay(m_Gold, m_Wood);
+        if (m_ResourceDataUI != null)
+            m_ResourceDataUI.UpdateResourceDisplay(Gold, Wood);
     }
     
     void OnGUI()

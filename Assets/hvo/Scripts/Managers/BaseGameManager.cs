@@ -16,15 +16,15 @@ namespace hvo.Scripts.Managers
         protected List<Unit> m_PlayerUnits = new();
         protected List<Unit> m_Enemies = new();
         protected List<StructureUnit> m_PlayerBuildings = new();
-        protected int m_Gold = 0;
-        protected int m_Wood = 0;
+        protected readonly ResourceManager m_Resources = new();
         protected GameState m_GameState = GameState.Playing;
         protected Player m_Player;
         public Player Player => m_Player;
 
-
-        public int Gold => m_Gold;
-        public int Wood => m_Wood;
+        // Named ResourceBank (not "Resources") so it never shadows UnityEngine.Resources in subclasses.
+        public ResourceManager ResourceBank => m_Resources;
+        public int Gold => m_Resources.GetAmount(ResourceType.Gold);
+        public int Wood => m_Resources.GetAmount(ResourceType.Wood);
 
         public void Awake()
         {
@@ -83,9 +83,15 @@ namespace hvo.Scripts.Managers
         
         public virtual void AddResources(int gold, int wood)
         {
-            m_Gold += gold;
-            m_Wood += wood;
+            m_Resources.Add(ResourceType.Gold, gold);
+            m_Resources.Add(ResourceType.Wood, wood);
         }
+
+        // Generic resource API (Food, Iron, Wheat, ... used by Features 3+).
+        public int GetResource(ResourceType type) => m_Resources.GetAmount(type);
+        public virtual void AddResource(ResourceType type, int amount) => m_Resources.Add(type, amount);
+        public bool HasResource(ResourceType type, int amount) => m_Resources.Has(type, amount);
+        public bool SpendResource(ResourceType type, int amount) => m_Resources.TrySpend(type, amount);
         
         
         public void HandleGameOver(bool isVictory, int stars = 3)
@@ -93,11 +99,11 @@ namespace hvo.Scripts.Managers
             if (isVictory)
             {
                 AudioManager.Get().PlayMusic(m_WinAudioSettings);
-                m_GameOverLayout.ShowVictory(m_Gold, stars, new List<Reward> { new Reward("Gold", 100), new Reward("Exp", 100) }, 5);
+                m_GameOverLayout.ShowVictory(Gold, stars, new List<Reward> { new Reward("Gold", 100), new Reward("Exp", 100) }, 5);
             }
             else
             {
-                m_GameOverLayout.ShowDefeat(m_Gold);
+                m_GameOverLayout.ShowDefeat(Gold);
                 AudioManager.Get().PlayMusic(m_LoseAudioSettings);
             }
 
