@@ -107,16 +107,19 @@ namespace hvo.Scripts.Managers
         
         void GoToVillage()
         {
+            Time.timeScale = 1f; // HandleGameOver froze time; unfreeze before leaving the scene
             SceneManager.LoadScene("PlayScene");
         }
 
         void ContinueNextLevel()
         {
+            Time.timeScale = 1f;
             SceneManager.LoadScene("BattleScene");
         }
 
         protected virtual void GoToBattle()
         {
+            Time.timeScale = 1f;
             SceneManager.LoadScene("BattleScene");
         }
 
@@ -134,6 +137,7 @@ namespace hvo.Scripts.Managers
 
         void OnDestroy()
         {
+            if (m_GameOverLayout == null) return;
             m_GameOverLayout.OnBackClicked -= GoToVillage;
             m_GameOverLayout.OnRetryClicked -= GoToBattle;
             m_GameOverLayout.OnContinueClicked -= ContinueNextLevel;

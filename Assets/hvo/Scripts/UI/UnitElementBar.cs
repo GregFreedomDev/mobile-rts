@@ -1,6 +1,7 @@
 using System.Linq;
 using hvo.Scripts.Managers;
 using hvo.Scripts.Units;
+using hvo.Scripts.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -17,13 +18,25 @@ namespace HvO.UI
         private bool m_IsEnemyUnit;
         private bool m_IsDragging;
         private GameObject m_PreviewObject;
+
+        // Lazy resolution — resolve the concrete BattleGameManager directly.
+        // (BaseGameManager.Get() casts unreliably because its fallback can't AddComponent
+        //  the abstract BaseGameManager type, leaving a junk object that breaks lookups.)
         private BattleGameManager m_BattleManager;
+        private BattleGameManager BattleManager
+        {
+            get
+            {
+                if (m_BattleManager == null)
+                    m_BattleManager = Object.FindFirstObjectByType<BattleGameManager>();
+                return m_BattleManager;
+            }
+        }
 
         void Start()
         {
             m_CanvasGroup = GetComponent<CanvasGroup>();
             m_ButtonText = GetComponentInChildren<TextMeshProUGUI>();
-            m_BattleManager = BaseGameManager.Get() as BattleGameManager;
         }
 
         public void Initialize(GameObject unitPrefab)
@@ -55,12 +68,13 @@ namespace HvO.UI
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (m_UnitPrefab == null || m_BattleManager == null) return;
-            if (m_BattleManager.IsBattleStarted) return;
+            if (m_UnitPrefab == null) return;
+            if (BattleManager != null && BattleManager.IsBattleStarted) return;
             if (!CanDeployMore()) return;
 
             m_IsDragging = true;
-            m_CanvasGroup.alpha = 0.6f;
+            DragState.IsDraggingUnit = true; // suppress camera panning while placing a unit
+            if (m_CanvasGroup != null) m_CanvasGroup.alpha = 0.6f;
 
             m_PreviewObject = new GameObject("UnitPreview");
             SpriteRenderer previewRenderer = m_PreviewObject.AddComponent<SpriteRenderer>();
@@ -82,8 +96,11 @@ namespace HvO.UI
             worldPos.z = 0;
             m_PreviewObject.transform.position = worldPos;
 
-            Vector3Int cellPos = m_BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
-            m_BattleManager.BattleGrid.HighlightCell(cellPos, !m_IsEnemyUnit);
+            if (BattleManager?.BattleGrid != null)
+            {
+                Vector3Int cellPos = BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
+                BattleManager.BattleGrid.HighlightCell(cellPos, !m_IsEnemyUnit);
+            }
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -91,7 +108,8 @@ namespace HvO.UI
             if (!m_IsDragging) return;
 
             m_IsDragging = false;
-            m_CanvasGroup.alpha = 1f;
+            DragState.IsDraggingUnit = false;
+            if (m_CanvasGroup != null) m_CanvasGroup.alpha = 1f;
 
             if (m_PreviewObject != null)
             {
@@ -99,29 +117,30 @@ namespace HvO.UI
                 m_PreviewObject = null;
             }
 
-            m_BattleManager.BattleGrid.ClearHighlight();
+            BattleManager?.BattleGrid?.ClearHighlight();
 
+            if (BattleManager?.BattleGrid == null) return;
             if (!CanDeployMore()) return;
 
             Vector3 worldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             worldPos.z = 0;
-            Vector3Int cellPos = m_BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
+            Vector3Int cellPos = BattleManager.BattleGrid.Tilemap.WorldToCell(worldPos);
 
-            if (m_BattleManager.BattleGrid.CanPlaceUnit(cellPos, isPlayer: !m_IsEnemyUnit))
+            if (BattleManager.BattleGrid.CanPlaceUnit(cellPos, isPlayer: !m_IsEnemyUnit))
             {
-                Vector3 snapped = m_BattleManager.BattleGrid.Tilemap.GetCellCenterWorld(cellPos);
+                Vector3 snapped = BattleManager.BattleGrid.Tilemap.GetCellCenterWorld(cellPos);
                 GameObject newUnit = Instantiate(m_UnitPrefab, snapped, Quaternion.identity);
                 Unit unitComp = newUnit.GetComponent<Unit>();
                 unitComp.GridPosition = cellPos;
                 newUnit.AddComponent<UnitDragger>();
-                m_BattleManager.BattleGrid.RegisterUnit(cellPos, unitComp);
+                BattleManager.BattleGrid.RegisterUnit(cellPos, unitComp);
             }
         }
 
         private bool CanDeployMore()
         {
-            if (m_BattleManager == null || m_IsEnemyUnit) return true;
-            return m_BattleManager.GetAllPlayerUnits().Count() < m_BattleManager.MaxPlayerUnits;
+            if (BattleManager == null || m_IsEnemyUnit) return true;
+            return BattleManager.GetAllPlayerUnits().Count() < BattleManager.MaxPlayerUnits;
         }
     }
 }

@@ -36,6 +36,19 @@ namespace hvo.Scripts.Managers
 
         private new void Awake()
         {
+            // HandleGameOver freezes the game with Time.timeScale = 0; that global survives the
+            // scene reload triggered by Continue/Retry, so reset it here or the new battle stays frozen.
+            Time.timeScale = 1f;
+
+            // A manager from a previous scene (e.g. the village GameManager) can persist into the
+            // battle scene via DontDestroyOnLoad and get picked up by units through the shared
+            // "BaseGameManager" tag. Strip any stale manager so this BattleGameManager is the only one.
+            foreach (var manager in FindObjectsByType<BaseGameManager>(FindObjectsSortMode.None))
+            {
+                if (manager != this)
+                    DestroyImmediate(manager); // synchronous so units never cache the stale manager
+            }
+
             base.Awake();
         }
 

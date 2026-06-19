@@ -6,12 +6,37 @@ using UnityEngine.Networking;
 public class TimeAPIHelper : MonoBehaviour
 {
     public static TimeAPIHelper Instance;
+
+    // Offset between trusted server time and the local clock, measured ONCE per session.
+    private static TimeSpan s_ServerOffset = TimeSpan.Zero;
+    private static bool s_SyncStarted = false;
+
+    /// <summary>Local UTC time corrected by the server offset. Safe to call synchronously and offline.</summary>
+    public static DateTime TrustedUtcNow => DateTime.UtcNow + s_ServerOffset;
+
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this); // component only — this may share its GameObject with the GameManager
+            return;
+        }
+        Instance = this;
+
+        // Sync the server offset a single time for the whole session.
+        if (!s_SyncStarted)
+        {
+            s_SyncStarted = true;
+            StartCoroutine(SyncServerOffset());
+        }
+    }
+
+    private IEnumerator SyncServerOffset()
+    {
+        yield return GetServerTime(
+            serverTime => s_ServerOffset = serverTime - DateTime.UtcNow,
+            error => Debug.LogWarning($"No se pudo sincronizar la hora del servidor ({error}). Se usará hora local.")
+        );
     }
 
     public IEnumerator GetServerTime(Action<DateTime> onSuccess, Action<string> onError)

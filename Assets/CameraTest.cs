@@ -1,6 +1,8 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using hvo.Scripts.Utils;
 
 public class CameraControllerMobile : MonoBehaviour
 {
@@ -76,6 +78,13 @@ public class CameraControllerMobile : MonoBehaviour
 
     private void HandleDrag()
     {
+        // Don't pan while the player is dragging a unit onto the grid.
+        if (DragState.IsDraggingUnit)
+        {
+            currentVelocityX = 0f;
+            return;
+        }
+
         Vector2 delta = Vector2.zero;
 
         // Touch

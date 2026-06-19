@@ -3,6 +3,7 @@
 
 using System;
 using UnityEngine;
+using hvo.Scripts.Utils;
 
 public class CameraController
 {
@@ -30,6 +31,7 @@ public class CameraController
     public void Update()
     {
         if (LockCamera) return;
+        if (DragState.IsDraggingUnit) return;
 
         if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Moved)
         {

@@ -11,8 +11,9 @@ public class EnemyUnit : HumanoidUnit
 
     protected override void UpdateBehaviour()
     {
-        
-        if (!((BattleGameManager)MGameGameManager).IsBattleStarted) return;
+        var battleManager = MGameGameManager as BattleGameManager;
+        if (battleManager == null) return;
+        if (!battleManager.IsBattleStarted) return;
 
         switch (CurrentState)
         {

@@ -8,7 +8,7 @@ public class VillagerSpriteSheetSwapper : MonoBehaviour
     public AnimationClip originalClip;
     public string clipNameToOverride = "Anim_Villager_idle";
 
-    [Header("Sprite Sheets (Editor-only flow)")]
+    [Header("Sprite Sheets ( mEditor-only flow)")]
     public Texture2D spriteSheet256;
     public Texture2D spriteSheet128;
     public Texture2D spriteSheet64;

@@ -65,7 +65,9 @@ public class SoldierUnit : HumanoidUnit
 
     protected override void UpdateBehaviour()
     {
-        if (!((BattleGameManager)MGameGameManager).IsBattleStarted) return;
+        var battleManager = MGameGameManager as BattleGameManager;
+        if (battleManager == null) return;
+        if (!battleManager.IsBattleStarted) return;
         
         if (CurrentState == UnitState.Idle || CurrentState == UnitState.Moving)
         {

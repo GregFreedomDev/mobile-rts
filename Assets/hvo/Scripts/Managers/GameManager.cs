@@ -558,39 +558,24 @@ void ConfirmBuildPlacement()
 
     if (m_PlacementProcess.TryFinalizePlacement(out Vector3 buildPosition))
     {
-        // 👇 Aquí empieza la nueva integración con hora real
-        StartCoroutine(TimeAPIHelper.Instance.GetServerTime(
-            (serverTime) =>
-            {
-                float constructionDuration = m_PlacementProcess.BuildAction.ConstructionTime;
-                DateTime finishTime = serverTime.AddSeconds(constructionDuration);
+        // Trusted time is synced once per session, so building is instant — no per-build network call.
+        float constructionDuration = m_PlacementProcess.BuildAction.ConstructionTime;
+        DateTime finishTime = TimeAPIHelper.TrustedUtcNow.AddSeconds(constructionDuration);
 
-                Debug.Log($"[BUILD] Construcción terminará a: {finishTime} UTC");
+        var buildingProcess = new BuildingProcess(
+            m_PlacementProcess.BuildAction,
+            buildPosition,
+            (WorkerUnit)ActiveUnit,
+            m_ConstructionEffectPrefab
+        );
+        buildingProcess.SetFinishTime(finishTime);
 
-                // Iniciar tu proceso de construcción con la hora confiable
-                var buildingProcess = new BuildingProcess(
-                    m_PlacementProcess.BuildAction,
-                    buildPosition,
-                    (WorkerUnit)ActiveUnit,
-                    m_ConstructionEffectPrefab
-                );
+        DisplayClickEffect(buildPosition, ClickType.Build);
+        AudioManager.Get().PlaySound(m_PlacementAudioSettings, buildPosition);
+        m_BuildConfirmationBar.Hide();
 
-                buildingProcess.SetFinishTime(finishTime); // 💥 Necesitas agregar este método (te lo explico abajo)
-
-                DisplayClickEffect(buildPosition, ClickType.Build);
-                AudioManager.Get().PlaySound(m_PlacementAudioSettings, buildPosition);
-                m_BuildConfirmationBar.Hide();
-
-                m_PlacementProcess = null;
-                m_CameraController.LockCamera = false;
-            },
-            (error) =>
-            {
-                Debug.LogError("Error al obtener hora del servidor: " + error);
-                // Si falla, podrías revertir recursos o dar mensaje
-                AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost);
-            }
-        ));
+        m_PlacementProcess = null;
+        m_CameraController.LockCamera = false;
     }
     else
     {
