@@ -76,7 +76,11 @@ public class WorkerUnit : HumanoidUnit
         HandleResourceDisplay();
     }
 
-    public void OnBuildingFinished() => ResetState();
+    public void OnBuildingFinished(Vector3 stepAsidePosition)
+    {
+        ResetState();
+        MoveTo(stepAsidePosition); // walk off the finished building so the worker isn't standing on it
+    }
 
     public void SetWoodStorage(StructureUnit storage)
     {

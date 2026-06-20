@@ -122,7 +122,10 @@ public class BuildingProcess
 
         if (HasActiveWorker)
         {
-            m_Worker.OnBuildingFinished();
+            // Send the worker to a clear spot below the building so it doesn't stand on it.
+            float down = (m_Structure.Collider != null ? m_Structure.Collider.bounds.extents.y : 1f) + 0.8f;
+            Vector3 stepAside = m_Structure.transform.position + new Vector3(0f, -down, 0f);
+            m_Worker.OnBuildingFinished(stepAside);
         }
 
         m_Structure.OnConstructionFinished();

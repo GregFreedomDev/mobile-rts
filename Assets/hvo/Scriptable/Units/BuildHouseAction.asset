@@ -11,17 +11,17 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 762c35c2489b2464ead3cf065da66e13, type: 3}
   m_Name: BuildHouseAction
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   Icon: {fileID: 4764987341452958515, guid: 4efd8ed7a9be249308201ac39adfe03d, type: 3}
   ActionName: Build House
   Guid: 9b1d2e3f-4a5b-4c6d-8e7f-0a1b2c3d4e5f
   m_StructurePrefab: {fileID: -3132591613312605348, guid: b9f3c2a1d4e54f6a8b1c2d3e4f5a6b70, type: 3}
   m_ConstructionTime: 15
-  m_PlacementSprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
-  m_FoundationSprite: {fileID: -2030184051479024499, guid: b73ad08e23af34548bda073e962dab3d, type: 3}
-  m_CompletionSprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
-  m_BuildingSize: {x: 1, y: 1, z: 0}
-  m_OriginOffset: {x: 0, y: 0, z: 0}
+  m_PlacementSprite: {fileID: 4764987341452958515, guid: 4efd8ed7a9be249308201ac39adfe03d, type: 3}
+  m_FoundationSprite: {fileID: -3135009239117609470, guid: 723396b6f426c418db17c8d401b59d54, type: 3}
+  m_CompletionSprite: {fileID: 4764987341452958515, guid: 4efd8ed7a9be249308201ac39adfe03d, type: 3}
+  m_BuildingSize: {x: 2, y: 2, z: 0}
+  m_OriginOffset: {x: -1, y: -1, z: 0}
   m_GoldCost: 75
   m_WoodCost: 50
-  m_MidConstructionSprite: {fileID: -6347541262358072628, guid: fc14b70a2dec34269ad30e9c53bdc99a, type: 3}
+  m_MidConstructionSprite: {fileID: -2457289259227966495, guid: 5605d7a8b0a4b41129401a9e6a9b565f, type: 3}
