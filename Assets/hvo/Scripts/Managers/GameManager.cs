@@ -55,6 +55,8 @@ public class GameManager : BaseGameManager
     private CameraController m_CameraController;
     private PlacementProcess m_PlacementProcess;
 
+    [SerializeField] private int m_BasePopulation = 4; // starting housing capacity (the castle)
+
     public GoldMine ActiveGoldMine => m_ActiveGoldMine;
     public bool HasActiveUnit => ActiveUnit != null;
 
@@ -63,6 +65,7 @@ public class GameManager : BaseGameManager
         base.Awake();
         Time.timeScale = 1;
         m_Resources.OnChanged += RefreshResourceUI; // refresh on any resource change, not just gold/wood
+        m_Population.IncreaseMax(m_BasePopulation);
         m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
         ClearActionBarUI();
         AddResources(500, 500);

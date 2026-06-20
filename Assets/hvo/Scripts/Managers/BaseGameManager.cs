@@ -17,6 +17,7 @@ namespace hvo.Scripts.Managers
         protected List<Unit> m_Enemies = new();
         protected List<StructureUnit> m_PlayerBuildings = new();
         protected readonly ResourceManager m_Resources = new();
+        protected readonly PopulationManager m_Population = new();
         protected GameState m_GameState = GameState.Playing;
         protected Player m_Player;
         public Player Player => m_Player;
@@ -25,6 +26,11 @@ namespace hvo.Scripts.Managers
         public ResourceManager ResourceBank => m_Resources;
         public int Gold => m_Resources.GetAmount(ResourceType.Gold);
         public int Wood => m_Resources.GetAmount(ResourceType.Wood);
+
+        public PopulationManager Population => m_Population;
+        // Current population = living villagers; derived from the registered units so it can't desync.
+        public int CurrentPopulation => m_PlayerUnits.Count(u => u != null && u is WorkerUnit);
+        public bool HasPopulationSpace => CurrentPopulation < m_Population.MaxPopulation;
 
         public void Awake()
         {
