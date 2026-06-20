@@ -25,4 +25,5 @@ MonoBehaviour:
   m_PlacementVisualOffset: {x: 0.5, y: 0.5}
   m_GoldCost: 50
   m_WoodCost: 50
+  m_Description: Huerto que produce Maiz. Asigna un aldeano para trabajarlo.
   m_MidConstructionSprite: {fileID: -6347541262358072628, guid: fc14b70a2dec34269ad30e9c53bdc99a, type: 3}

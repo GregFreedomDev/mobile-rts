@@ -24,4 +24,5 @@ MonoBehaviour:
   m_OriginOffset: {x: -1, y: -2, z: 0}
   m_GoldCost: 150
   m_WoodCost: 150
+  m_Description: Torre defensiva que ataca a los enemigos cercanos.
   m_MidConstructionSprite: {fileID: -8119710116723695807, guid: d52a213242a694a8cb2014a1cceea45a, type: 3}

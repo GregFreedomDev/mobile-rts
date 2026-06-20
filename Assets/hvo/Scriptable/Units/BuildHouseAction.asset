@@ -24,4 +24,5 @@ MonoBehaviour:
   m_OriginOffset: {x: -1, y: -1, z: 0}
   m_GoldCost: 75
   m_WoodCost: 50
+  m_Description: Casa que aumenta la poblacion maxima y genera un aldeano.
   m_MidConstructionSprite: {fileID: -2457289259227966495, guid: 5605d7a8b0a4b41129401a9e6a9b565f, type: 3}

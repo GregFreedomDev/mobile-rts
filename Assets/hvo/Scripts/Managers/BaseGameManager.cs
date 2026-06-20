@@ -32,6 +32,9 @@ namespace hvo.Scripts.Managers
         public int CurrentPopulation => m_PlayerUnits.Count(u => u != null && u is WorkerUnit);
         public bool HasPopulationSpace => CurrentPopulation < m_Population.MaxPopulation;
 
+        // Villagers with no job assigned (free to build/chop/tend/...).
+        public int AvailableWorkers => m_PlayerUnits.Count(u => u is WorkerUnit w && w.IsAvailable);
+
         public void Awake()
         {
             m_Player = new Player("Player1");

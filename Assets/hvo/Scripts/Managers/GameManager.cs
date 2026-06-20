@@ -54,6 +54,9 @@ public class GameManager : BaseGameManager
     private Tree[] m_Trees = new Tree[0];
     private CameraController m_CameraController;
     private PlacementProcess m_PlacementProcess;
+    private BuildAssignButton m_AssignButton;
+    private IWorkerAssignable m_Assignable; // what the floating "assign worker" button targets
+    private int m_LastAvailableWorkers = -1; // to refresh the "free workers" UI only when it changes
 
     [SerializeField] private int m_BasePopulation = 4; // starting housing capacity (the castle)
 
@@ -73,12 +76,67 @@ public class GameManager : BaseGameManager
         AddResources(500, 500);
         m_buttonBattle.onClick.AddListener(GoToBattle);
         AudioManager.Get().PlayMusic(m_BgMusicAudioSettings);
+        SetupBuildMenu();
+    }
+
+    void SetupBuildMenu()
+    {
+        var catalog = Resources.Load<BuildCatalogSO>("BuildCatalog");
+        if (catalog == null)
+        {
+            Debug.LogWarning("[BuildMenu] BuildCatalog not found in Resources.");
+            return;
+        }
+
+        Canvas canvas = m_ActionBar != null ? m_ActionBar.GetComponentInParent<Canvas>() : FindAnyObjectByType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogWarning("[BuildMenu] No Canvas found for the build menu.");
+            return;
+        }
+
+        var menu = new GameObject("BuildMenu").AddComponent<BuildMenu>();
+        menu.Initialize(catalog.Buildings, canvas, StartBuildProcess);
+
+        var font = FindAnyObjectByType<TMPro.TextMeshProUGUI>()?.font;
+        m_AssignButton = new GameObject("BuildAssignButton").AddComponent<BuildAssignButton>();
+        m_AssignButton.Initialize(canvas, font, AssignNearestWorker);
+    }
+
+    void AssignNearestWorker(IWorkerAssignable target)
+    {
+        WorkerUnit best = null;
+        float bestSqr = float.MaxValue;
+        Vector3 targetPos = target.AnchorTransform.position;
+
+        foreach (var unit in m_PlayerUnits)
+        {
+            if (unit is WorkerUnit worker && worker.IsAvailable) // only idle workers, never steal a busy one
+            {
+                float sqr = (worker.transform.position - targetPos).sqrMagnitude;
+                if (sqr < bestSqr) { bestSqr = sqr; best = worker; }
+            }
+        }
+
+        if (best != null)
+            target.AssignWorker(best);
+        else
+            ShowTextPopup("No hay trabajadores disponibles", targetPos + Vector3.up, Color.red);
     }
 
     void Update()
     {
+        if (m_AssignButton != null) m_AssignButton.Track(m_Assignable);
+
+        int available = AvailableWorkers;
+        if (available != m_LastAvailableWorkers)
+        {
+            m_LastAvailableWorkers = available;
+            RefreshPopulationUI();
+        }
+
         if (m_GameState == GameState.Paused) return;
-        
+
         m_CameraController.Update();
 
         if (m_PlacementProcess != null)
@@ -315,19 +373,21 @@ public class GameManager : BaseGameManager
 
         if (HasActiveUnit && ActiveUnit is WorkerUnit worker)
         {
-            if (TryGetClickedResource(hit, out Tree tree))
-            {
-                worker.SendToChop(tree, DestinationSource.PlayerClick);
-                DisplayClickEffect(tree.transform.position, ClickType.Chop);
-                return;
-            }
-            else if (TryGetClickedResource(hit, out GoldMine mine))
+            // Mining still works by clicking the mine with a worker selected (no mine button yet).
+            if (TryGetClickedResource(hit, out GoldMine mine))
             {
                 worker.SendToMine(mine, DestinationSource.PlayerClick);
                 DisplayClickEffect(mine.transform.position, ClickType.Build);
                 return;
             }
+        }
 
+        // Clicking a tree selects it (shows the "Cortar leña" button); it is NOT chopped directly,
+        // even with a worker selected.
+        if (TryGetClickedResource(hit, out Tree clickedTree))
+        {
+            SelectAssignable(clickedTree);
+            return;
         }
 
         if (HasClickedOnUnit(hit, out var unit))
@@ -347,10 +407,17 @@ public class GameManager : BaseGameManager
         }
     }
 
+    void SelectAssignable(IWorkerAssignable assignable)
+    {
+        if (HasActiveUnit) CancelActiveUnit(); // drop any unit selection (and its assignable)
+        m_Assignable = assignable;
+    }
+
     public void CancelActiveUnit()
     {
         ActiveUnit.Deselect();
         ActiveUnit = null;
+        m_Assignable = null;
 
         ClearActionBarUI();
     }
@@ -381,13 +448,10 @@ public class GameManager : BaseGameManager
 
     void HandleClickOnGround(Vector2 worldPoint)
     {
-        if (HasActiveUnit && IsHumanoid(ActiveUnit))
-        {
-            if (ActiveUnit.CurrentState == UnitState.Minig) return;
-
-            DisplayClickEffect(worldPoint, ClickType.Move);
-            ActiveUnit.MoveTo(worldPoint, DestinationSource.PlayerClick);
-        }
+        // Clicking empty ground just clears the selection. Workers are no longer moved manually;
+        // they only move via job assignments (build/tend/chop/mine).
+        if (HasActiveUnit) CancelActiveUnit();
+        m_Assignable = null;
     }
 
     void HandleClickOnPlayerUnit(Unit unit)
@@ -401,13 +465,10 @@ public class GameManager : BaseGameManager
             }
             else if (ActiveUnit is WorkerUnit worker)
             {
-                if (WorkerClickedOnUnfinishedBuild(unit))
-                {
-                    DisplayClickEffect(unit.transform.position, ClickType.Build);
-                    worker.SendToBuild(unit as StructureUnit, DestinationSource.PlayerClick);
-                    return;
-                }
-                else if (worker.IsHoldingWood && WorkerClickedOnWoodStorage(unit))
+                // Depositing gathered resources stays. Assigning a worker to build/tend a building
+                // is done via the building's "assign worker" button — not by clicking the building
+                // with a worker selected (that just selects the building now).
+                if (worker.IsHoldingWood && WorkerClickedOnWoodStorage(unit))
                 {
                     HandleResourceReturn(worker, unit as StructureUnit);
                     return;
@@ -417,21 +478,10 @@ public class GameManager : BaseGameManager
                     HandleResourceReturn(worker, unit as StructureUnit);
                     return;
                 }
-                else if (unit is FarmUnity farm && !farm.IsUnderConstuction)
-                {
-                    AssignWorkerToFarm(worker, farm);
-                    return;
-                }
             }
         }
 
         SelectNewUnit(unit);
-    }
-
-    void AssignWorkerToFarm(WorkerUnit worker, FarmUnity farm)
-    {
-        farm.AssignWorker(worker); // the farm walks the worker over and keeps it tending the plot
-        DisplayClickEffect(farm.transform.position, ClickType.Build);
     }
 
     void HandleResourceReturn(WorkerUnit worker, StructureUnit structure)
@@ -476,13 +526,6 @@ public class GameManager : BaseGameManager
         }
     }
 
-    bool WorkerClickedOnUnfinishedBuild(Unit clickedUnit)
-    {
-        return
-            clickedUnit is StructureUnit structure &&
-            structure.IsUnderConstuction;
-    }
-
     void SelectNewUnit(Unit unit)
     {
         if (unit.CurrentState == UnitState.Dead) return;
@@ -495,6 +538,7 @@ public class GameManager : BaseGameManager
         ShowUnitActions(unit);
         ActiveUnit = unit;
         ActiveUnit.Select();
+        m_Assignable = unit as IWorkerAssignable; // foundation/farm → show the assign button
     }
 
     bool HasClickedOnActiveUnit(Unit clickedUnit)
@@ -502,10 +546,6 @@ public class GameManager : BaseGameManager
         return clickedUnit == ActiveUnit;
     }
 
-    bool IsHumanoid(Unit unit)
-    {
-        return unit is HumanoidUnit;
-    }
 
     void DisplayClickEffect(Vector2 worldPoint, ClickType clickType)
     {
@@ -563,12 +603,6 @@ public class GameManager : BaseGameManager
 
 void ConfirmBuildPlacement()
 {
-    if (((WorkerUnit)ActiveUnit).CurrentState == UnitState.Minig)
-    {
-        Debug.Log("Worker is minning!");
-        return;
-    }
-
     if (!TryDeductResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost))
     {
         Debug.Log("Not Enough Resources!");
@@ -577,17 +611,9 @@ void ConfirmBuildPlacement()
 
     if (m_PlacementProcess.TryFinalizePlacement(out Vector3 buildPosition))
     {
-        // Trusted time is synced once per session, so building is instant — no per-build network call.
-        float constructionDuration = m_PlacementProcess.BuildAction.ConstructionTime;
-        DateTime finishTime = TimeAPIHelper.TrustedUtcNow.AddSeconds(constructionDuration);
-
-        var buildingProcess = new BuildingProcess(
-            m_PlacementProcess.BuildAction,
-            buildPosition,
-            (WorkerUnit)ActiveUnit,
-            m_ConstructionEffectPrefab
-        );
-        buildingProcess.SetFinishTime(finishTime);
+        // Place the foundation and keep it selected so the "assign worker" button shows below it.
+        var process = new BuildingProcess(m_PlacementProcess.BuildAction, buildPosition, m_ConstructionEffectPrefab);
+        SelectNewUnit(process.Structure);
 
         DisplayClickEffect(buildPosition, ClickType.Build);
         AudioManager.Get().PlaySound(m_PlacementAudioSettings, buildPosition);
@@ -598,7 +624,7 @@ void ConfirmBuildPlacement()
     }
     else
     {
-        AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost);
+        AddResources(m_PlacementProcess.GoldCost, m_PlacementProcess.WoodCost); // refund invalid placement
     }
 }
 
@@ -633,7 +659,7 @@ void ConfirmBuildPlacement()
     void RefreshPopulationUI()
     {
         if (m_ResourceDataUI != null)
-            m_ResourceDataUI.UpdatePopulation(CurrentPopulation, Population.MaxPopulation);
+            m_ResourceDataUI.UpdatePopulation(CurrentPopulation, Population.MaxPopulation, AvailableWorkers);
     }
     
     void OnGUI()

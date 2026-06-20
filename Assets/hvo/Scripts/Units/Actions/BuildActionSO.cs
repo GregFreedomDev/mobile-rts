@@ -20,6 +20,8 @@ public class BuildActionSO: ActionSO
     [SerializeField] private int m_GoldCost;
     [SerializeField] private int m_WoodCost;
 
+    [TextArea] [SerializeField] private string m_Description; // shown in the build catalog info popup
+
     [SerializeField] private Sprite m_MidConstructionSprite;
     public Sprite MidConstructionSprite => m_MidConstructionSprite;
     public StructureUnit StructurePrefab => m_StructurePrefab;
@@ -34,6 +36,7 @@ public class BuildActionSO: ActionSO
 
     public int GoldCost => m_GoldCost;
     public int WoodCost => m_WoodCost;
+    public string Description => m_Description;
 
 
     public override void Execute(GameManager gameManager)

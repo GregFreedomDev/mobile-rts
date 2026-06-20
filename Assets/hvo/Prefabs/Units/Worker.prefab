@@ -268,11 +268,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IsKingUnit: 0
-  m_Actions:
-  - {fileID: 11400000, guid: 7e1c06040b4604e089737a6fbd38f5ff, type: 2}
-  - {fileID: 11400000, guid: 9e13609202ce744a6bf3f00a83dd510c, type: 2}
-  - {fileID: 11400000, guid: c7e8d9a0b1c24d3e5f60718293a4b5c6, type: 2}
-  - {fileID: 11400000, guid: f2b3c4d5e6f7081920a3b4c5d6e7f809, type: 2}
+  m_Actions: []
   m_ObjectDetectionRadius: 1.6
   m_UnitDetectionCheckRate: 0.5
   m_AttackRange: 0.8

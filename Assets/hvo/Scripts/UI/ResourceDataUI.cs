@@ -23,12 +23,12 @@ public class ResourceDataUI: MonoBehaviour
         m_WoodText.text = wood.ToString();
     }
 
-    public void UpdatePopulation(int current, int max)
+    public void UpdatePopulation(int current, int max, int availableWorkers)
     {
         if (m_PopulationText == null)
-            m_PopulationText = CreateCornerLabel(-30f, new Vector2(220f, 50f));
+            m_PopulationText = CreateCornerLabel(-30f, new Vector2(300f, 50f));
 
-        m_PopulationText.text = $"Pob: {current}/{max}";
+        m_PopulationText.text = $"Pob: {current}/{max}   Libres: {availableWorkers}";
     }
 
     public void UpdateExtraResources(ResourceManager resources)

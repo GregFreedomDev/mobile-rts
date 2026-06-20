@@ -16,14 +16,38 @@ public class BuildingProcess
 
     private DateTime m_FinishTime;
     private bool m_MidSpriteApplied = false;
+    private bool m_CountdownStarted;
+
+    private WorkerUnit m_PendingWorker; // dispatched to build but not yet arrived
 
     private bool InProgress => HasActiveWorker && m_Worker.CurrentState == UnitState.Building;
     public bool HasActiveWorker => m_Worker != null;
+    public StructureUnit Structure => m_Structure;
 
+    // True while a worker is actively building OR is on its way here to build it.
+    public bool HasAssignedBuilder
+    {
+        get
+        {
+            if (m_Worker != null) return true;
+            if (m_PendingWorker == null) return false;
+            return m_PendingWorker.CurrentState != UnitState.Dead
+                && m_PendingWorker.CurrentTask == UnitTask.Build
+                && m_PendingWorker.Target == (Unit)m_Structure;
+        }
+    }
+
+    public void AssignBuilder(WorkerUnit worker)
+    {
+        m_PendingWorker = worker;
+        worker.SendToBuild(m_Structure);
+    }
+
+    // Places the building as a foundation (no worker). Construction only starts once a worker is
+    // assigned to it (see AddWorker), so the player can place first and assign a builder later.
     public BuildingProcess(
         BuildActionSO buildAction,
         Vector3 placementPosition,
-        WorkerUnit worker,
         ParticleSystem constructionEffectPrefab
     )
     {
@@ -40,9 +64,6 @@ public class BuildingProcess
         m_Structure.Renderer.sprite = m_BuildAction.FoundationSprite;
         m_Structure.transform.position = placementPosition;
         m_Structure.RegisterProcess(this);
-
-        worker.SendToBuild(m_Structure);
-        m_Worker = worker;
     }
 
     public void Update()
@@ -66,9 +87,12 @@ public class BuildingProcess
         }
     }
 
-    public void SetFinishTime(DateTime finishTime)
+    // Starts the timed construction once. Called when the first worker begins building.
+    private void StartCountdown()
     {
-        m_FinishTime = finishTime;
+        if (m_CountdownStarted) return;
+        m_CountdownStarted = true;
+        m_FinishTime = TimeAPIHelper.TrustedUtcNow.AddSeconds(m_BuildAction.ConstructionTime);
         CoroutineRunner.Instance.StartCoroutine(BuildingCountdown());
     }
 
@@ -136,6 +160,7 @@ public class BuildingProcess
     {
         if (HasActiveWorker) return;
         m_Worker = worker;
+        StartCountdown(); // a builder arrived — begin the timed construction
     }
 
     public void RemoveWorker()

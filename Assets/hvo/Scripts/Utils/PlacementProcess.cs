@@ -54,6 +54,11 @@ public class PlacementProcess
         renderer.color = new Color(1, 1, 1, 0.5f);
         renderer.sprite = m_BuildAction.PlacementSprite;
 
+        // Start at the center of the current view; the player then drags it to position.
+        Vector3 viewCenter = Camera.main.transform.position;
+        viewCenter.z = 0f;
+        m_SnappedPosition = SnapToGrid(viewCenter);
+        m_PlacementOutline.transform.position = m_SnappedPosition + (Vector3)m_BuildAction.PlacementVisualOffset;
     }
 
     public void Cleanup()

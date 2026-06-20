@@ -28,6 +28,9 @@ public class WorkerUnit : HumanoidUnit
     public bool IsHoldingGold => m_GoldCollected > 0;
     public bool IsHoldingResource => IsHoldingWood || IsHoldingGold;
 
+    // Free to take a new job: alive and not already building/chopping/mining/tending/returning.
+    public bool IsAvailable => CurrentState != UnitState.Dead && CurrentTask == UnitTask.None;
+
     
     protected override void UpdateBehaviour()
     {
@@ -285,11 +288,15 @@ public class WorkerUnit : HumanoidUnit
 
     void CheckForConstruction()
     {
-        var distanceToConstruction = Vector3.Distance(transform.position, Target.transform.position);
+        // Measure to the building's collider edge (not its center) so large buildings are reachable.
+        var structure = Target as StructureUnit;
+        float distance = structure != null && structure.Collider != null
+            ? Vector2.Distance(transform.position, structure.Collider.ClosestPoint(transform.position))
+            : Vector3.Distance(transform.position, Target.transform.position);
 
-        if (distanceToConstruction <= m_ObjectDetectionRadius && CurrentState == UnitState.Idle)
+        if (distance <= m_ObjectDetectionRadius && CurrentState == UnitState.Idle)
         {
-            StartBuilding(Target as StructureUnit);
+            StartBuilding(structure);
         }
     }
 

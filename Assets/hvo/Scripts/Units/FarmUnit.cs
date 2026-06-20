@@ -25,10 +25,52 @@ public class FarmUnity : StructureUnit
     protected override int WalkabilityWidth => 1;
     protected override int WalkabilityHeight => 1;
 
-    public void AssignWorker(WorkerUnit worker)
+    // Once built, the farm needs a villager to plant/tend it. While a foundation, fall back to the
+    // base (assign a builder). A tender that has reached the plot but is then moved away gets fully
+    // unassigned (see UpdateTenderAssignment), so it won't auto-resume if it later passes by.
+    private const float TendLeash = 3.5f;
+    private bool m_TenderArrived;
+    private bool IsTended => m_AssignedWorker != null && m_AssignedWorker.CurrentState != UnitState.Dead;
+
+    public override bool NeedsWorker => IsUnderConstuction ? base.NeedsWorker : !IsTended;
+
+    public override void AssignWorker(WorkerUnit worker)
+    {
+        if (IsUnderConstuction) base.AssignWorker(worker); // build the foundation
+        else AssignTender(worker);                         // plant/tend the crop
+    }
+
+    private void AssignTender(WorkerUnit worker)
     {
         m_AssignedWorker = worker;
-        SendWorkerToPlot(); // walk it over to start working
+        m_TenderArrived = false;
+        worker.SetTask(UnitTask.Farm); // mark busy so it isn't picked for other jobs
+        SendWorkerToPlot();            // walk it over to start working
+    }
+
+    // Drops the tender entirely once it has arrived and then left the plot, so moving the worker
+    // away is a permanent un-assignment rather than a pause.
+    private void UpdateTenderAssignment()
+    {
+        if (m_AssignedWorker == null) return;
+
+        if (m_AssignedWorker.CurrentState == UnitState.Dead)
+        {
+            Unassign();
+            return;
+        }
+
+        float distance = Vector2.Distance(m_AssignedWorker.transform.position, transform.position);
+        if (distance <= NearRange) m_TenderArrived = true;
+        else if (m_TenderArrived && distance > TendLeash) Unassign();
+    }
+
+    private void Unassign()
+    {
+        if (m_AssignedWorker != null && m_AssignedWorker.CurrentTask == UnitTask.Farm)
+            m_AssignedWorker.SetTask(UnitTask.None); // free it for other jobs
+        m_AssignedWorker = null;
+        m_TenderArrived = false;
     }
 
     protected override void AfterConstructionUpdate()
@@ -36,10 +78,11 @@ public class FarmUnity : StructureUnit
         if (MGameGameManager == null) return;
 
         EnsureBar();
+        UpdateTenderAssignment(); // release the tender if it has wandered off the plot
 
-        if (!IsWorkerNear())
+        if (m_AssignedWorker == null || !IsWorkerNear())
         {
-            m_Bar.SetVisible(false); // worker is away (walking over or sent elsewhere)
+            m_Bar.SetVisible(false); // no tender, or it's still walking over
             m_Timer = 0f;
             return;
         }

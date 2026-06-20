@@ -2,7 +2,7 @@
 
 using UnityEngine;
 
-public class StructureUnit : Unit
+public class StructureUnit : Unit, IWorkerAssignable
 {
     [SerializeField] private bool m_CanStoreWood = false;
     [SerializeField] private bool m_CanStoreGold = false;
@@ -10,8 +10,21 @@ public class StructureUnit : Unit
 
     public override bool IsBuilding => true;
     public bool IsUnderConstuction => m_BuildingProcess != null;
+    // A placed foundation that has no builder assigned or on the way.
+    public bool IsAwaitingWorker => m_BuildingProcess != null && !m_BuildingProcess.HasAssignedBuilder;
+
+    public void AssignBuilder(WorkerUnit worker) => m_BuildingProcess?.AssignBuilder(worker);
     public bool CanStoreGold => m_CanStoreGold;
     public bool CanStoreWood => m_CanStoreWood;
+
+    // IWorkerAssignable — a foundation offers a builder; subclasses (farm) extend for the built state.
+    public Transform AnchorTransform => transform;
+    public virtual string AssignLabel => "Asignar trabajador";
+    public virtual bool NeedsWorker => IsAwaitingWorker;
+    public virtual void AssignWorker(WorkerUnit worker)
+    {
+        if (IsUnderConstuction) AssignBuilder(worker);
+    }
 
     void Update()
     {
