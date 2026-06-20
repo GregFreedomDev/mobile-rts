@@ -48,10 +48,15 @@ public class StructureUnit : Unit
 
     protected virtual void AfterConstructionUpdate() {}
 
+    // Size (in tiles) of the non-walkable block this building stamps onto the pathfinding grid.
+    // Smaller buildings (e.g. the farm) override this so units can stand closer to them.
+    protected virtual int WalkabilityWidth => 4;
+    protected virtual int WalkabilityHeight => 4;
+
     void UpdateWalkability()
     {
-        int buildingWidthInTiles = 4;
-        int buildingHeightInTiles = 4;
+        int buildingWidthInTiles = WalkabilityWidth;
+        int buildingHeightInTiles = WalkabilityHeight;
 
         float halfWidth = buildingWidthInTiles / 2f;
         float halfHeight = buildingHeightInTiles / 2f;

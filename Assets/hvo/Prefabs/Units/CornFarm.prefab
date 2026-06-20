@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 6512072592393299372}
   - component: {fileID: -3132591613312605348}
   m_Layer: 6
-  m_Name: Farm
+  m_Name: CornFarm
   m_TagString: Building
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79,7 +79,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 25
   m_Sprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0.93, b: 0.55, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -136,8 +136,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a614a15fe25408ab90c4405281ad5ee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   m_IsKingUnit: 0
   m_Actions: []
   m_ObjectDetectionRadius: 0
@@ -181,3 +181,6 @@ MonoBehaviour:
   IsTargeted: 0
   m_CanStoreWood: 0
   m_CanStoreGold: 0
+  m_OutputResource: 6
+  m_AmountPerCycle: 2
+  m_CycleSeconds: 8

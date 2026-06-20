@@ -7,6 +7,7 @@ public class PlacementProcess
 {
     private GameObject m_PlacementOutline;
     private BuildActionSO m_BuildAction;
+    private Vector3 m_SnappedPosition; // logical footprint anchor (sprite may be visually offset from it)
     private Vector3Int[] m_HighlightPositions;
     private Sprite m_PlaceholderTileSprite;
     private TilemapManager m_TilemapManager;
@@ -33,14 +34,15 @@ public class PlacementProcess
     {
         if (m_PlacementOutline != null)
         {
-            HighlightTiles(m_PlacementOutline.transform.position);
+            HighlightTiles(m_SnappedPosition);
         }
 
         if (HvoUtils.IsPointerOverUIElement()) return;
 
         if (HvoUtils.TryGetHoldPosition(out Vector3 worldPosition))
         {
-            m_PlacementOutline.transform.position = SnapToGrid(worldPosition);
+            m_SnappedPosition = SnapToGrid(worldPosition);
+            m_PlacementOutline.transform.position = m_SnappedPosition + (Vector3)m_BuildAction.PlacementVisualOffset;
         }
     }
 
@@ -65,7 +67,7 @@ public class PlacementProcess
         if (IsPlacementAreaValid())
         {
             ClearHighlights();
-            buildPosition = m_PlacementOutline.transform.position;
+            buildPosition = m_PlacementOutline.transform.position; // already includes the visual offset
             Object.Destroy(m_PlacementOutline);
             return true;
         }

@@ -417,10 +417,21 @@ public class GameManager : BaseGameManager
                     HandleResourceReturn(worker, unit as StructureUnit);
                     return;
                 }
+                else if (unit is FarmUnity farm && !farm.IsUnderConstuction)
+                {
+                    AssignWorkerToFarm(worker, farm);
+                    return;
+                }
             }
         }
 
         SelectNewUnit(unit);
+    }
+
+    void AssignWorkerToFarm(WorkerUnit worker, FarmUnity farm)
+    {
+        farm.AssignWorker(worker); // the farm walks the worker over and keeps it tending the plot
+        DisplayClickEffect(farm.transform.position, ClickType.Build);
     }
 
     void HandleResourceReturn(WorkerUnit worker, StructureUnit structure)
@@ -614,8 +625,9 @@ void ConfirmBuildPlacement()
 
     void RefreshResourceUI()
     {
-        if (m_ResourceDataUI != null)
-            m_ResourceDataUI.UpdateResourceDisplay(Gold, Wood);
+        if (m_ResourceDataUI == null) return;
+        m_ResourceDataUI.UpdateResourceDisplay(Gold, Wood);
+        m_ResourceDataUI.UpdateExtraResources(m_Resources);
     }
 
     void RefreshPopulationUI()

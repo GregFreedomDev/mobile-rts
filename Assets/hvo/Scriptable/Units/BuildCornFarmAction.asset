@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 762c35c2489b2464ead3cf065da66e13, type: 3}
-  m_Name: BuildFarmAction
-  m_EditorClassIdentifier: 
+  m_Name: BuildCornFarmAction
+  m_EditorClassIdentifier:
   Icon: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
-  ActionName: Build Tower
-  Guid: 037d2345-9734-4123-a7ac-cb12a14b73b7
-  m_StructurePrefab: {fileID: -3132591613312605348, guid: 60e4000fb5f65455f8fa200928e3e5aa, type: 3}
+  ActionName: Build Corn Farm
+  Guid: 7c2e3f4a-5b6c-4d7e-9f80-1a2b3c4d5e6f
+  m_StructurePrefab: {fileID: -3132591613312605348, guid: e1a2b3c4d5e6f70819a2b3c4d5e6f708, type: 3}
   m_ConstructionTime: 30
   m_PlacementSprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
   m_FoundationSprite: {fileID: -2030184051479024499, guid: b73ad08e23af34548bda073e962dab3d, type: 3}

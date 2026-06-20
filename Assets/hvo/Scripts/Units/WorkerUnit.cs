@@ -94,7 +94,20 @@ public class WorkerUnit : HumanoidUnit
 
     public void SendToBuild(StructureUnit structure, DestinationSource destinationSource = DestinationSource.CodeTriggered)
     {
-        MoveTo(structure.transform.position, destinationSource);
+        // Walk to the tile next to the structure (in the worker's direction), not its center —
+        // otherwise the pathfinder drops the worker onto the building. One tile out keeps it beside.
+        Vector2 fromCenter = (Vector2)transform.position - (Vector2)structure.transform.position;
+        Vector2 step;
+        if (fromCenter == Vector2.zero)
+            step = Vector2.down;
+        else if (Mathf.Abs(fromCenter.x) >= Mathf.Abs(fromCenter.y))
+            step = new Vector2(Mathf.Sign(fromCenter.x), 0f);
+        else
+            step = new Vector2(0f, Mathf.Sign(fromCenter.y));
+
+        Vector3 approach = (Vector2)structure.transform.position + step;
+
+        MoveTo(approach, destinationSource);
         SetTarget(structure);
         SetTask(UnitTask.Build);
     }

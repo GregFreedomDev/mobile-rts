@@ -13,6 +13,10 @@ public class BuildActionSO: ActionSO
     [SerializeField] private Vector3Int m_BuildingSize;
     [SerializeField] private Vector3Int m_OriginOffset;
 
+    // Shifts the ghost sprite and final position without moving the tile footprint. Use (0.5, 0.5)
+    // to center an odd (e.g. 1x1) building's sprite on its cell. Default (0,0) = no change.
+    [SerializeField] private Vector2 m_PlacementVisualOffset;
+
     [SerializeField] private int m_GoldCost;
     [SerializeField] private int m_WoodCost;
 
@@ -26,6 +30,7 @@ public class BuildActionSO: ActionSO
 
     public Vector3Int BuildingSize => m_BuildingSize;
     public Vector3Int OriginOffset => m_OriginOffset;
+    public Vector2 PlacementVisualOffset => m_PlacementVisualOffset;
 
     public int GoldCost => m_GoldCost;
     public int WoodCost => m_WoodCost;
