@@ -65,7 +65,9 @@ public class GameManager : BaseGameManager
         base.Awake();
         Time.timeScale = 1;
         m_Resources.OnChanged += RefreshResourceUI; // refresh on any resource change, not just gold/wood
+        m_Population.OnChanged += RefreshPopulationUI; // refresh when housing capacity changes
         m_Population.IncreaseMax(m_BasePopulation);
+        RefreshPopulationUI();
         m_CameraController = new CameraController(m_PanSpeed, m_MobilePanSpeed);
         ClearActionBarUI();
         AddResources(500, 500);
@@ -100,6 +102,7 @@ public class GameManager : BaseGameManager
             else
             {
                 m_PlayerUnits.Add(unit);
+                RefreshPopulationUI();
             }
         }
         else
@@ -133,6 +136,7 @@ public class GameManager : BaseGameManager
             else
             {
                 m_PlayerUnits.Remove(unit);
+                RefreshPopulationUI();
             }
         }
         else
@@ -612,6 +616,12 @@ void ConfirmBuildPlacement()
     {
         if (m_ResourceDataUI != null)
             m_ResourceDataUI.UpdateResourceDisplay(Gold, Wood);
+    }
+
+    void RefreshPopulationUI()
+    {
+        if (m_ResourceDataUI != null)
+            m_ResourceDataUI.UpdatePopulation(CurrentPopulation, Population.MaxPopulation);
     }
     
     void OnGUI()
