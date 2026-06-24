@@ -194,18 +194,34 @@ public abstract class WorkerTendedBuilding : StructureUnit
         return (Vector2)target.transform.position + dir * r;
     }
 
+    // Lets another building drop this worker when it gets reassigned, so one villager only ever
+    // tends a single building (otherwise nearby buildings would all "share" the same tender).
+    public void ReleaseIfTending(WorkerUnit worker)
+    {
+        if (m_AssignedWorker == worker) Unassign();
+    }
+
     private void AssignTender(WorkerUnit worker)
     {
+        // Drop the worker from any building it was tending before.
+        foreach (var other in FindObjectsByType<WorkerTendedBuilding>(FindObjectsSortMode.None))
+            if (other != this) other.ReleaseIfTending(worker);
+
         m_AssignedWorker = worker;
         m_Phase = Phase.Working;
-        worker.SetTask(UnitTask.Farm); // mark busy so it isn't picked for other jobs
+        worker.IsTending = true;        // busy regardless of the task field
+        worker.SetTask(UnitTask.Farm);  // mark busy so it isn't picked for other jobs
         SendWorkerToPlot();
     }
 
     private void Unassign()
     {
-        if (m_AssignedWorker != null && m_AssignedWorker.CurrentTask == UnitTask.Farm)
-            m_AssignedWorker.SetTask(UnitTask.None); // free it for other jobs
+        if (m_AssignedWorker != null)
+        {
+            m_AssignedWorker.IsTending = false;
+            if (m_AssignedWorker.CurrentTask == UnitTask.Farm)
+                m_AssignedWorker.SetTask(UnitTask.None); // free it for other jobs
+        }
         m_AssignedWorker = null;
         m_Phase = Phase.Working;
     }

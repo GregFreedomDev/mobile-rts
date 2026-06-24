@@ -9,7 +9,8 @@ public enum ResourceType
     Carbon,
     Wheat,
     Corn,
-    Flour
+    Flour,
+    Bread
 }
 
 /// <summary>A typed resource amount, serializable so ScriptableObjects can declare multi-resource costs.</summary>

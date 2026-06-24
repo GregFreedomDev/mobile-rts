@@ -14,7 +14,7 @@ public class ResourceDataUI: MonoBehaviour
     private static readonly ResourceType[] s_ExtraTypes =
     {
         ResourceType.Food, ResourceType.Wheat, ResourceType.Corn,
-        ResourceType.Flour, ResourceType.Iron, ResourceType.Carbon
+        ResourceType.Flour, ResourceType.Bread, ResourceType.Iron, ResourceType.Carbon
     };
 
     public void UpdateResourceDisplay(int gold, int wood)
@@ -54,6 +54,7 @@ public class ResourceDataUI: MonoBehaviour
         ResourceType.Wheat => "Trigo",
         ResourceType.Corn => "Maíz",
         ResourceType.Flour => "Harina",
+        ResourceType.Bread => "Pan",
         _ => type.ToString()
     };
 

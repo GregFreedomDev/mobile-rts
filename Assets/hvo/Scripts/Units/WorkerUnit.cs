@@ -28,8 +28,11 @@ public class WorkerUnit : HumanoidUnit
     public bool IsHoldingGold => m_GoldCollected > 0;
     public bool IsHoldingResource => IsHoldingWood || IsHoldingGold;
 
-    // Free to take a new job: alive and not already building/chopping/mining/tending/returning.
-    public bool IsAvailable => CurrentState != UnitState.Dead && CurrentTask == UnitTask.None;
+    // Set while assigned to tend a building (robust against the task being reset elsewhere).
+    public bool IsTending { get; set; }
+
+    // Free to take a new job: alive, not tending a building, and with no other task.
+    public bool IsAvailable => CurrentState != UnitState.Dead && CurrentTask == UnitTask.None && !IsTending;
 
     
     protected override void UpdateBehaviour()
