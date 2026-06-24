@@ -10,11 +10,17 @@ using TMPro;
 /// </summary>
 public class BuildAssignButton : MonoBehaviour
 {
+    private enum Mode { None, Assign, Release }
+    private static readonly Color AssignColor = new Color(0.85f, 0.7f, 0.25f, 0.97f);
+    private static readonly Color ReleaseColor = new Color(0.8f, 0.32f, 0.3f, 0.97f);
+
     private Camera m_Cam;
     private RectTransform m_Rect;
     private GameObject m_ButtonGo;
+    private Image m_Image;
     private TextMeshProUGUI m_Label;
     private IWorkerAssignable m_Target;
+    private Mode m_Mode;
     private Action<IWorkerAssignable> m_OnAssign;
 
     public void Initialize(Canvas canvas, TMP_FontAsset font, Action<IWorkerAssignable> onAssign)
@@ -30,11 +36,11 @@ public class BuildAssignButton : MonoBehaviour
         m_Rect.anchorMin = m_Rect.anchorMax = new Vector2(0f, 0f);
         m_Rect.pivot = new Vector2(0.5f, 1f); // hangs below the tracked point
 
-        var img = m_ButtonGo.GetComponent<Image>();
-        img.color = new Color(0.85f, 0.7f, 0.25f, 0.97f);
+        m_Image = m_ButtonGo.GetComponent<Image>();
+        m_Image.color = AssignColor;
 
         var button = m_ButtonGo.GetComponent<Button>();
-        button.targetGraphic = img;
+        button.targetGraphic = m_Image;
         button.onClick.AddListener(OnClick);
 
         var labelGo = new GameObject("Label", typeof(RectTransform));
@@ -57,11 +63,19 @@ public class BuildAssignButton : MonoBehaviour
 
     void Update()
     {
-        bool show = m_Target != null && m_Target.AnchorTransform != null && m_Target.NeedsWorker;
+        m_Mode = Mode.None;
+        if (m_Target != null && m_Target.AnchorTransform != null)
+        {
+            if (m_Target.NeedsWorker) m_Mode = Mode.Assign;
+            else if (m_Target.HasWorker) m_Mode = Mode.Release;
+        }
+
+        bool show = m_Mode != Mode.None;
         if (m_ButtonGo.activeSelf != show) m_ButtonGo.SetActive(show);
         if (!show) return;
 
-        m_Label.text = m_Target.AssignLabel;
+        m_Label.text = m_Mode == Mode.Assign ? m_Target.AssignLabel : "Detener trabajo";
+        m_Image.color = m_Mode == Mode.Assign ? AssignColor : ReleaseColor;
 
         if (m_Cam == null) m_Cam = Camera.main;
         Vector3 below = m_Target.AnchorTransform.position + Vector3.down * 1.2f;
@@ -70,6 +84,9 @@ public class BuildAssignButton : MonoBehaviour
 
     private void OnClick()
     {
-        if (m_Target != null) m_OnAssign?.Invoke(m_Target);
+        if (m_Target == null) return;
+
+        if (m_Mode == Mode.Assign) m_OnAssign?.Invoke(m_Target);
+        else if (m_Mode == Mode.Release) m_Target.ReleaseWorker();
     }
 }

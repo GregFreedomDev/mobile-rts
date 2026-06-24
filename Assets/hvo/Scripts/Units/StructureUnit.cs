@@ -17,14 +17,16 @@ public class StructureUnit : Unit, IWorkerAssignable
     public bool CanStoreGold => m_CanStoreGold;
     public bool CanStoreWood => m_CanStoreWood;
 
-    // IWorkerAssignable — a foundation offers a builder; subclasses (farm) extend for the built state.
+    // IWorkerAssignable — a foundation offers a builder; subclasses (farm/mill) extend for the built state.
     public Transform AnchorTransform => transform;
     public virtual string AssignLabel => "Asignar trabajador";
     public virtual bool NeedsWorker => IsAwaitingWorker;
+    public virtual bool HasWorker => false;        // a plain building has no releasable worker
     public virtual void AssignWorker(WorkerUnit worker)
     {
         if (IsUnderConstuction) AssignBuilder(worker);
     }
+    public virtual void ReleaseWorker() { }
 
     void Update()
     {

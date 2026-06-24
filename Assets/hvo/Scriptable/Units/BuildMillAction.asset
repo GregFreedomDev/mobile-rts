@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 762c35c2489b2464ead3cf065da66e13, type: 3}
+  m_Name: BuildMillAction
+  m_EditorClassIdentifier:
+  Icon: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
+  ActionName: Build Mill
+  Guid: 8d3f5a1b-2c4e-4f6a-9b8c-1d2e3f4a5b6c
+  m_StructurePrefab: {fileID: -3132591613312605348, guid: d4e5f6a7b8c9401223d4e5f6a7b8c902, type: 3}
+  m_ConstructionTime: 20
+  m_PlacementSprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
+  m_FoundationSprite: {fileID: -2030184051479024499, guid: b73ad08e23af34548bda073e962dab3d, type: 3}
+  m_CompletionSprite: {fileID: -607959028573396715, guid: 910e7076f2a404c06a18a19c9825dceb, type: 3}
+  m_BuildingSize: {x: 1, y: 1, z: 0}
+  m_OriginOffset: {x: 0, y: 0, z: 0}
+  m_PlacementVisualOffset: {x: 0.5, y: 0.5}
+  m_GoldCost: 100
+  m_WoodCost: 50
+  m_Description: Molino que convierte Trigo en Harina. Asigna un aldeano para trabajarlo.
+  m_MidConstructionSprite: {fileID: -6347541262358072628, guid: fc14b70a2dec34269ad30e9c53bdc99a, type: 3}

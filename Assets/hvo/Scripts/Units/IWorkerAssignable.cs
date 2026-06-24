@@ -6,10 +6,13 @@ using UnityEngine;
 /// </summary>
 public interface IWorkerAssignable
 {
-    /// <summary>Whether the assign button should currently be offered for this target.</summary>
+    /// <summary>Whether the "assign worker" button should be offered for this target.</summary>
     bool NeedsWorker { get; }
 
-    /// <summary>Button caption (e.g. "Asignar trabajador", "Cortar leña").</summary>
+    /// <summary>Whether a worker is currently assigned and can be released ("Detener trabajo").</summary>
+    bool HasWorker { get; }
+
+    /// <summary>Assign-button caption (e.g. "Asignar trabajador", "Cortar leña").</summary>
     string AssignLabel { get; }
 
     /// <summary>World transform the button hovers under.</summary>
@@ -17,4 +20,7 @@ public interface IWorkerAssignable
 
     /// <summary>Dispatch the given worker to this target's job.</summary>
     void AssignWorker(WorkerUnit worker);
+
+    /// <summary>Un-assign the current worker (and send it walking off).</summary>
+    void ReleaseWorker();
 }

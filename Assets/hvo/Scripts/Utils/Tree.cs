@@ -14,7 +14,9 @@ public class Tree: MonoBehaviour, IWorkerAssignable
     public Transform AnchorTransform => transform;
     public string AssignLabel => "Cortar leña";
     public bool NeedsWorker => !m_Claimed;
+    public bool HasWorker => false; // no "stop" for trees
     public void AssignWorker(WorkerUnit worker) => worker.SendToChop(this);
+    public void ReleaseWorker() { }
 
     public bool TryToClaim()
     {
