@@ -14,10 +14,10 @@ public class FarmUnity : WorkerTendedBuilding
 
     protected override bool CanProduce() => true; // a farm always grows its crop
 
-    protected override void OnCycleComplete()
+    // The base carries the harvest to a consumer (e.g. the mill for wheat), or adds it directly.
+    protected override void RunCycle(out ResourceType output, out int amount)
     {
-        MGameGameManager.AddResource(m_OutputResource, m_AmountPerCycle);
-        MGameGameManager.ShowTextPopup($"+{m_AmountPerCycle} {m_OutputResource}", GetTopPosition(),
-            new Color(0.95f, 0.85f, 0.25f));
+        output = m_OutputResource;
+        amount = m_AmountPerCycle;
     }
 }
